@@ -1,0 +1,796 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "prepare_savings_subaccount",
+  "name": "Prepare Savings Sub-Account",
+  "description": "Search for a member, prepare a savings sub-account, and succeed only after verifying the final review screen without performing the irreversible Open Account action.",
+  "version": "0.1.0",
+  "approval": {
+    "status": "draft",
+    "reviewed_by": null,
+    "reviewed_at": null,
+    "notes": "Generated from a discovery run and awaiting review."
+  },
+  "surface": {
+    "adapter_id": "web.playwright",
+    "surface_kind": "web",
+    "app_family": "demo_credit_union_member_servicing",
+    "entrypoint": "http://127.0.0.1:8000/member-search",
+    "supported_variants": ["base"],
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    }
+  },
+  "contract": {
+    "inputs": [
+      {
+        "name": "member_id",
+        "type": "string",
+        "required": true,
+        "sensitive": true,
+        "description": "Synthetic member identifier used to locate the member record.",
+        "format": "member_id",
+        "pattern": "^[0-9]{5}$"
+      },
+      {
+        "name": "product_code",
+        "type": "enum",
+        "required": true,
+        "sensitive": false,
+        "description": "Savings product to prepare.",
+        "enum_values": ["HOLIDAY_SAVINGS", "MONEY_MARKET"]
+      },
+      {
+        "name": "opening_deposit",
+        "type": "decimal",
+        "required": true,
+        "sensitive": true,
+        "description": "Opening deposit represented as a decimal string.",
+        "format": "currency_amount",
+        "pattern": "^[0-9]+\\.[0-9]{2}$"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "preparation_status",
+        "type": "enum",
+        "required": true,
+        "sensitive": false,
+        "description": "Terminal status after the final review screen is verified.",
+        "enum_values": ["REVIEW_READY"]
+      }
+    ]
+  },
+  "policy": {
+    "allowed_origins": ["http://127.0.0.1:8000"],
+    "allowed_route_patterns": [
+      "^/member-search$",
+      "^/members/[a-zA-Z0-9_-]+$",
+      "^/members/[a-zA-Z0-9_-]+/accounts$",
+      "^/members/[a-zA-Z0-9_-]+/accounts/new$",
+      "^/members/[a-zA-Z0-9_-]+/accounts/review$"
+    ],
+    "allowed_operations": [
+      "navigate",
+      "click",
+      "fill",
+      "select",
+      "wait",
+      "extract",
+      "assert",
+      "human_gate"
+    ],
+    "forbid_external_navigation": true,
+    "risky_action_mode": "block",
+    "max_discovery_steps": 30,
+    "max_replay_steps": 20,
+    "max_runtime_seconds": 300
+  },
+  "data_handling": {
+    "artifact_contains_raw_inputs": false,
+    "artifact_contains_raw_secrets": false,
+    "log_redaction": "required",
+    "screenshot_policy": "synthetic_data_only",
+    "redact_fields": ["member_id", "opening_deposit"]
+  },
+  "steps": [
+    {
+      "id": "enter_member_id",
+      "description": "Enter the requested member identifier in the search form.",
+      "operation": "fill",
+      "target": {
+        "frame_path": [],
+        "anchor_context": "Member Search",
+        "candidates": [
+          {
+            "strategy": "label",
+            "label": "Member ID",
+            "strict": true,
+            "expected_count": 1,
+            "stability": "stable",
+            "confidence": 0.98
+          },
+          {
+            "strategy": "role_and_name",
+            "role": "textbox",
+            "name": "Member ID",
+            "strict": true,
+            "expected_count": 1,
+            "stability": "stable",
+            "confidence": 0.95
+          }
+        ]
+      },
+      "value": {
+        "source": "input",
+        "path": "member_id"
+      },
+      "risk": "reversible",
+      "preconditions": [
+        {
+          "kind": "url_matches",
+          "description": "The run is on the member search route.",
+          "expected": "^http://127.0.0.1:8000/member-search$"
+        }
+      ],
+      "postconditions": [
+        {
+          "kind": "value_equals",
+          "description": "The member field contains the invocation member ID.",
+          "target": {
+            "frame_path": [],
+            "anchor_context": "Member Search",
+            "candidates": [
+              {
+                "strategy": "label",
+                "label": "Member ID",
+                "strict": true,
+                "expected_count": 1,
+                "stability": "stable",
+                "confidence": 0.98
+              }
+            ]
+          },
+          "expected": {
+            "source": "input",
+            "path": "member_id"
+          }
+        }
+      ],
+      "timeout_ms": 10000,
+      "retry": {
+        "max_attempts": 2,
+        "backoff_ms": 250,
+        "retry_on": ["stale_target"],
+        "idempotent_only": true
+      },
+      "capture_evidence": false
+    },
+    {
+      "id": "submit_member_search",
+      "description": "Submit the member search.",
+      "operation": "click",
+      "target": {
+        "frame_path": [],
+        "anchor_context": "Member Search",
+        "candidates": [
+          {
+            "strategy": "role_and_name",
+            "role": "button",
+            "name": "Search",
+            "strict": true,
+            "expected_count": 1,
+            "stability": "stable",
+            "confidence": 0.99
+          },
+          {
+            "strategy": "text",
+            "text": "Search",
+            "strict": true,
+            "expected_count": 1,
+            "stability": "variant_specific",
+            "confidence": 0.8
+          }
+        ]
+      },
+      "risk": "read_only",
+      "preconditions": [
+        {
+          "kind": "element_visible",
+          "description": "The search button is visible.",
+          "target": {
+            "frame_path": [],
+            "anchor_context": "Member Search",
+            "candidates": [
+              {
+                "strategy": "role_and_name",
+                "role": "button",
+                "name": "Search",
+                "strict": true,
+                "expected_count": 1,
+                "stability": "stable",
+                "confidence": 0.99
+              }
+            ]
+          }
+        }
+      ],
+      "postconditions": [
+        {
+          "kind": "network_idle",
+          "description": "The member-search response has settled.",
+          "settle_ms": 250
+        }
+      ],
+      "timeout_ms": 15000,
+      "retry": {
+        "max_attempts": 2,
+        "backoff_ms": 500,
+        "retry_on": ["transient_timeout", "known_interstitial"],
+        "idempotent_only": true
+      },
+      "capture_evidence": true
+    },
+    {
+      "id": "open_member_record",
+      "description": "Open the single matching member record.",
+      "operation": "click",
+      "target": {
+        "frame_path": [],
+        "anchor_context": "Search Results",
+        "candidates": [
+          {
+            "strategy": "role_and_name",
+            "role": "link",
+            "name": "Open member record",
+            "strict": true,
+            "expected_count": 1,
+            "stability": "stable",
+            "confidence": 0.97
+          },
+          {
+            "strategy": "accessibility",
+            "selector": "link[name='Open member record']",
+            "strict": true,
+            "expected_count": 1,
+            "stability": "stable",
+            "confidence": 0.92
+          }
+        ]
+      },
+      "risk": "read_only",
+      "preconditions": [
+        {
+          "kind": "element_visible",
+          "description": "Exactly one open-member control is available.",
+          "target": {
+            "frame_path": [],
+            "anchor_context": "Search Results",
+            "candidates": [
+              {
+                "strategy": "role_and_name",
+                "role": "link",
+                "name": "Open member record",
+                "strict": true,
+                "expected_count": 1,
+                "stability": "stable",
+                "confidence": 0.97
+              }
+            ]
+          }
+        }
+      ],
+      "postconditions": [
+        {
+          "kind": "url_matches",
+          "description": "The member-detail route is active.",
+          "expected": "^http://127.0.0.1:8000/members/[a-zA-Z0-9_-]+$"
+        }
+      ],
+      "timeout_ms": 15000,
+      "retry": {
+        "max_attempts": 2,
+        "backoff_ms": 500,
+        "retry_on": ["transient_timeout", "stale_target"],
+        "idempotent_only": true
+      },
+      "capture_evidence": false
+    },
+    {
+      "id": "open_accounts_workspace",
+      "description": "Open the member accounts workspace inside the legacy frame.",
+      "operation": "click",
+      "target": {
+        "frame_path": ["iframe[name='workspace']"],
+        "anchor_context": "Member Actions",
+        "candidates": [
+          {
+            "strategy": "role_and_name",
+            "role": "link",
+            "name": "Accounts",
+            "strict": true,
+            "expected_count": 1,
+            "stability": "stable",
+            "confidence": 0.95
+          },
+          {
+            "strategy": "text",
+            "text": "Accounts",
+            "strict": true,
+            "expected_count": 1,
+            "stability": "variant_specific",
+            "confidence": 0.78
+          }
+        ]
+      },
+      "risk": "read_only",
+      "preconditions": [
+        {
+          "kind": "element_visible",
+          "description": "The accounts navigation control is visible in the workspace frame.",
+          "target": {
+            "frame_path": ["iframe[name='workspace']"],
+            "anchor_context": "Member Actions",
+            "candidates": [
+              {
+                "strategy": "role_and_name",
+                "role": "link",
+                "name": "Accounts",
+                "strict": true,
+                "expected_count": 1,
+                "stability": "stable",
+                "confidence": 0.95
+              }
+            ]
+          }
+        }
+      ],
+      "postconditions": [
+        {
+          "kind": "text_contains",
+          "description": "The accounts workspace is visible.",
+          "target": {
+            "frame_path": ["iframe[name='workspace']"],
+            "anchor_context": "Accounts",
+            "candidates": [
+              {
+                "strategy": "role_and_name",
+                "role": "heading",
+                "name": "Member Accounts",
+                "strict": true,
+                "expected_count": 1,
+                "stability": "stable",
+                "confidence": 0.98
+              }
+            ]
+          },
+          "expected": "Member Accounts"
+        }
+      ],
+      "timeout_ms": 15000,
+      "retry": {
+        "max_attempts": 2,
+        "backoff_ms": 500,
+        "retry_on": ["transient_timeout", "stale_target", "known_interstitial"],
+        "idempotent_only": true
+      },
+      "capture_evidence": false
+    },
+    {
+      "id": "start_subaccount_flow",
+      "description": "Start the new sub-account workflow.",
+      "operation": "click",
+      "target": {
+        "frame_path": ["iframe[name='workspace']"],
+        "anchor_context": "Member Accounts",
+        "candidates": [
+          {
+            "strategy": "role_and_name",
+            "role": "button",
+            "name": "Open New Sub-Account",
+            "strict": true,
+            "expected_count": 1,
+            "stability": "stable",
+            "confidence": 0.97
+          }
+        ]
+      },
+      "risk": "reversible",
+      "preconditions": [
+        {
+          "kind": "element_visible",
+          "description": "The new-account button is visible.",
+          "target": {
+            "frame_path": ["iframe[name='workspace']"],
+            "anchor_context": "Member Accounts",
+            "candidates": [
+              {
+                "strategy": "role_and_name",
+                "role": "button",
+                "name": "Open New Sub-Account",
+                "strict": true,
+                "expected_count": 1,
+                "stability": "stable",
+                "confidence": 0.97
+              }
+            ]
+          }
+        }
+      ],
+      "postconditions": [
+        {
+          "kind": "element_visible",
+          "description": "The account product field is visible.",
+          "target": {
+            "frame_path": ["iframe[name='workspace']"],
+            "anchor_context": "Open Sub-Account",
+            "candidates": [
+              {
+                "strategy": "label",
+                "label": "Product",
+                "strict": true,
+                "expected_count": 1,
+                "stability": "stable",
+                "confidence": 0.98
+              }
+            ]
+          }
+        }
+      ],
+      "timeout_ms": 15000,
+      "retry": {
+        "max_attempts": 2,
+        "backoff_ms": 500,
+        "retry_on": ["transient_timeout", "stale_target"],
+        "idempotent_only": true
+      },
+      "capture_evidence": false
+    },
+    {
+      "id": "select_product",
+      "description": "Select the requested savings product.",
+      "operation": "select",
+      "target": {
+        "frame_path": ["iframe[name='workspace']"],
+        "anchor_context": "Open Sub-Account",
+        "candidates": [
+          {
+            "strategy": "label",
+            "label": "Product",
+            "strict": true,
+            "expected_count": 1,
+            "stability": "stable",
+            "confidence": 0.98
+          },
+          {
+            "strategy": "role_and_name",
+            "role": "combobox",
+            "name": "Product",
+            "strict": true,
+            "expected_count": 1,
+            "stability": "stable",
+            "confidence": 0.95
+          }
+        ]
+      },
+      "value": {
+        "source": "input",
+        "path": "product_code"
+      },
+      "risk": "reversible",
+      "preconditions": [],
+      "postconditions": [
+        {
+          "kind": "value_equals",
+          "description": "The selected product matches the invocation.",
+          "target": {
+            "frame_path": ["iframe[name='workspace']"],
+            "anchor_context": "Open Sub-Account",
+            "candidates": [
+              {
+                "strategy": "label",
+                "label": "Product",
+                "strict": true,
+                "expected_count": 1,
+                "stability": "stable",
+                "confidence": 0.98
+              }
+            ]
+          },
+          "expected": {
+            "source": "input",
+            "path": "product_code"
+          }
+        }
+      ],
+      "timeout_ms": 10000,
+      "retry": {
+        "max_attempts": 2,
+        "backoff_ms": 250,
+        "retry_on": ["stale_target"],
+        "idempotent_only": true
+      },
+      "capture_evidence": false
+    },
+    {
+      "id": "enter_opening_deposit",
+      "description": "Enter the requested opening deposit.",
+      "operation": "fill",
+      "target": {
+        "frame_path": ["iframe[name='workspace']"],
+        "anchor_context": "Open Sub-Account",
+        "candidates": [
+          {
+            "strategy": "label",
+            "label": "Opening Deposit",
+            "strict": true,
+            "expected_count": 1,
+            "stability": "stable",
+            "confidence": 0.98
+          }
+        ]
+      },
+      "value": {
+        "source": "input",
+        "path": "opening_deposit"
+      },
+      "risk": "reversible",
+      "preconditions": [],
+      "postconditions": [
+        {
+          "kind": "value_equals",
+          "description": "The deposit field matches the invocation amount.",
+          "target": {
+            "frame_path": ["iframe[name='workspace']"],
+            "anchor_context": "Open Sub-Account",
+            "candidates": [
+              {
+                "strategy": "label",
+                "label": "Opening Deposit",
+                "strict": true,
+                "expected_count": 1,
+                "stability": "stable",
+                "confidence": 0.98
+              }
+            ]
+          },
+          "expected": {
+            "source": "input",
+            "path": "opening_deposit"
+          }
+        }
+      ],
+      "timeout_ms": 10000,
+      "retry": {
+        "max_attempts": 2,
+        "backoff_ms": 250,
+        "retry_on": ["stale_target"],
+        "idempotent_only": true
+      },
+      "capture_evidence": false
+    },
+    {
+      "id": "continue_to_review",
+      "description": "Continue to and verify the final review screen.",
+      "operation": "click",
+      "target": {
+        "frame_path": ["iframe[name='workspace']"],
+        "anchor_context": "Open Sub-Account",
+        "candidates": [
+          {
+            "strategy": "role_and_name",
+            "role": "button",
+            "name": "Continue to Review",
+            "strict": true,
+            "expected_count": 1,
+            "stability": "stable",
+            "confidence": 0.98
+          }
+        ]
+      },
+      "risk": "reversible",
+      "preconditions": [],
+      "postconditions": [
+        {
+          "kind": "element_visible",
+          "description": "The account-opening review heading is visible.",
+          "target": {
+            "frame_path": ["iframe[name='workspace']"],
+            "anchor_context": "Review",
+            "candidates": [
+              {
+                "strategy": "role_and_name",
+                "role": "heading",
+                "name": "Review New Account",
+                "strict": true,
+                "expected_count": 1,
+                "stability": "stable",
+                "confidence": 0.99
+              }
+            ]
+          }
+        },
+        {
+          "kind": "element_visible",
+          "description": "The irreversible Open Account control is visible but remains policy-blocked.",
+          "target": {
+            "frame_path": ["iframe[name='workspace']"],
+            "anchor_context": "Review New Account",
+            "candidates": [
+              {
+                "strategy": "role_and_name",
+                "role": "button",
+                "name": "Open Account",
+                "strict": true,
+                "expected_count": 1,
+                "stability": "stable",
+                "confidence": 0.99
+              }
+            ]
+          }
+        }
+      ],
+      "timeout_ms": 15000,
+      "retry": {
+        "max_attempts": 2,
+        "backoff_ms": 500,
+        "retry_on": ["transient_timeout", "stale_target"],
+        "idempotent_only": true
+      },
+      "capture_evidence": true
+    }
+  ],
+  "recovery_policies": [
+    {
+      "code": "DISMISS_KNOWN_SYSTEM_NOTICE",
+      "description": "Dismiss the synthetic known maintenance notice once and retry the interrupted idempotent step.",
+      "trigger": {
+        "kind": "dialog_present",
+        "description": "The known System Notice dialog is visible.",
+        "target": {
+          "frame_path": [],
+          "anchor_context": "System Notice",
+          "candidates": [
+            {
+              "strategy": "role_and_name",
+              "role": "dialog",
+              "name": "System Notice",
+              "strict": true,
+              "expected_count": 1,
+              "stability": "stable",
+              "confidence": 0.99
+            }
+          ]
+        }
+      },
+      "max_applications": 1,
+      "actions": [
+        {
+          "operation": "click",
+          "target": {
+            "frame_path": [],
+            "anchor_context": "System Notice",
+            "candidates": [
+              {
+                "strategy": "role_and_name",
+                "role": "button",
+                "name": "Dismiss",
+                "strict": true,
+                "expected_count": 1,
+                "stability": "stable",
+                "confidence": 0.99
+              }
+            ]
+          },
+          "risk": "reversible"
+        }
+      ]
+    }
+  ],
+  "business_outcomes": [
+    {
+      "code": "MEMBER_NOT_FOUND",
+      "description": "No member exists for the supplied synthetic member identifier.",
+      "detector": {
+        "kind": "text_contains",
+        "description": "The no-member result message is visible.",
+        "target": {
+          "frame_path": [],
+          "anchor_context": "Search Results",
+          "candidates": [
+            {
+              "strategy": "role_and_name",
+              "role": "status",
+              "name": "No member found",
+              "strict": true,
+              "expected_count": 1,
+              "stability": "stable",
+              "confidence": 0.99
+            }
+          ]
+        },
+        "expected": "No member found"
+      },
+      "terminal": true
+    },
+    {
+      "code": "PRODUCT_NOT_ELIGIBLE",
+      "description": "The selected member is not eligible for the requested savings product.",
+      "detector": {
+        "kind": "text_contains",
+        "description": "The product-ineligibility message is visible.",
+        "target": {
+          "frame_path": ["iframe[name='workspace']"],
+          "anchor_context": "Open Sub-Account",
+          "candidates": [
+            {
+              "strategy": "role_and_name",
+              "role": "alert",
+              "name": "Product not available for this member",
+              "strict": true,
+              "expected_count": 1,
+              "stability": "stable",
+              "confidence": 0.99
+            }
+          ]
+        },
+        "expected": "Product not available for this member"
+      },
+      "terminal": true
+    }
+  ],
+  "final_checkpoint": {
+    "mode": "all",
+    "conditions": [
+      {
+        "kind": "element_visible",
+        "description": "The account-opening review heading is visible.",
+        "target": {
+          "frame_path": ["iframe[name='workspace']"],
+          "anchor_context": "Review",
+          "candidates": [
+            {
+              "strategy": "role_and_name",
+              "role": "heading",
+              "name": "Review New Account",
+              "strict": true,
+              "expected_count": 1,
+              "stability": "stable",
+              "confidence": 0.99
+            }
+          ]
+        }
+      },
+      {
+        "kind": "element_visible",
+        "description": "The irreversible Open Account control is visible but remains policy-blocked.",
+        "target": {
+          "frame_path": ["iframe[name='workspace']"],
+          "anchor_context": "Review New Account",
+          "candidates": [
+            {
+              "strategy": "role_and_name",
+              "role": "button",
+              "name": "Open Account",
+              "strict": true,
+              "expected_count": 1,
+              "stability": "stable",
+              "confidence": 0.99
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "provenance": {
+    "discovery_run_id": "discovery_demo_placeholder",
+    "goal_template": "Prepare a {product_code} sub-account for member {member_id} with an opening deposit of {opening_deposit}, stopping at the verified final review screen.",
+    "generated_at": "2026-09-19T00:00:00Z",
+    "compiler_version": "0.1.0",
+    "model_provider": "openai",
+    "model": "configured_at_runtime",
+    "trace_id": null,
+    "event_log_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "contains_raw_model_transcript": false
+  }
+}

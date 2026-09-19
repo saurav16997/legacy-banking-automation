@@ -1,0 +1,709 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/computer-use-capability-1.0.0.json",
+  "title": "Computer-Use Capability Artifact",
+  "description": "A reviewable, parameterized capability learned during bounded discovery and executed later by deterministic TypeScript application code without an LLM in the decision loop.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_id",
+    "name",
+    "description",
+    "version",
+    "approval",
+    "surface",
+    "contract",
+    "policy",
+    "data_handling",
+    "steps",
+    "recovery_policies",
+    "business_outcomes",
+    "final_checkpoint",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "artifact_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,63}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "approval": {
+      "$ref": "#/$defs/approval"
+    },
+    "surface": {
+      "$ref": "#/$defs/surface"
+    },
+    "contract": {
+      "$ref": "#/$defs/contract"
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "data_handling": {
+      "$ref": "#/$defs/dataHandling"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    },
+    "recovery_policies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/recoveryPolicy"
+      }
+    },
+    "business_outcomes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/businessOutcome"
+      }
+    },
+    "final_checkpoint": {
+      "$ref": "#/$defs/checkpoint"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    }
+  },
+  "$defs": {
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["draft", "approved", "retired"]
+        },
+        "reviewed_by": {
+          "type": ["string", "null"]
+        },
+        "reviewed_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "notes": {
+          "type": ["string", "null"],
+          "maxLength": 1000
+        }
+      }
+    },
+    "surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapter_id", "app_family", "entrypoint", "supported_variants"],
+      "properties": {
+        "adapter_id": {
+          "type": "string",
+          "description": "Implementation key such as web.playwright; the artifact contract is not coupled to the implementation class."
+        },
+        "surface_kind": {
+          "enum": ["web", "desktop", "remote_desktop"],
+          "default": "web"
+        },
+        "app_family": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.-]+$"
+        },
+        "entrypoint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "supported_variants": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "viewport": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 640
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 480
+            }
+          }
+        }
+      }
+    },
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inputs", "outputs"],
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        }
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "required", "sensitive", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "type": {
+          "enum": ["string", "integer", "number", "boolean", "decimal", "enum", "object", "array"]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "sensitive": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "format": {
+          "type": "string"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "enum_values": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": ["string", "number", "integer", "boolean"]
+          }
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_origins",
+        "allowed_route_patterns",
+        "allowed_operations",
+        "forbid_external_navigation",
+        "risky_action_mode",
+        "max_discovery_steps",
+        "max_replay_steps",
+        "max_runtime_seconds"
+      ],
+      "properties": {
+        "allowed_origins": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "allowed_route_patterns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowed_operations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/operation"
+          }
+        },
+        "forbid_external_navigation": {
+          "const": true
+        },
+        "risky_action_mode": {
+          "enum": ["block", "require_confirmation", "require_human_control"]
+        },
+        "max_discovery_steps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "max_replay_steps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "max_runtime_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1800
+        }
+      }
+    },
+    "dataHandling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_contains_raw_inputs",
+        "artifact_contains_raw_secrets",
+        "log_redaction",
+        "screenshot_policy",
+        "redact_fields"
+      ],
+      "properties": {
+        "artifact_contains_raw_inputs": {
+          "const": false
+        },
+        "artifact_contains_raw_secrets": {
+          "const": false
+        },
+        "log_redaction": {
+          "enum": ["required"]
+        },
+        "screenshot_policy": {
+          "enum": ["mask_sensitive_regions", "synthetic_data_only", "disabled"]
+        },
+        "redact_fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "operation": {
+      "enum": ["navigate", "click", "fill", "select", "wait", "extract", "assert", "human_gate"]
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "description",
+        "operation",
+        "risk",
+        "preconditions",
+        "postconditions",
+        "timeout_ms",
+        "retry",
+        "capture_evidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation": {
+          "$ref": "#/$defs/operation"
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        },
+        "value": {
+          "$ref": "#/$defs/valueExpression"
+        },
+        "output_name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "risk": {
+          "enum": ["read_only", "reversible", "consequential", "irreversible"]
+        },
+        "preconditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/condition"
+          }
+        },
+        "postconditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/condition"
+          }
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 120000
+        },
+        "retry": {
+          "$ref": "#/$defs/retryPolicy"
+        },
+        "capture_evidence": {
+          "type": "boolean"
+        },
+        "human_instructions": {
+          "type": "string"
+        },
+        "resume_checkpoint": {
+          "$ref": "#/$defs/checkpoint"
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["frame_path", "candidates"],
+      "properties": {
+        "frame_path": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "anchor_context": {
+          "type": ["string", "null"]
+        },
+        "candidates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/locatorCandidate"
+          }
+        }
+      }
+    },
+    "locatorCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "strict", "expected_count", "stability", "confidence"],
+      "properties": {
+        "strategy": {
+          "enum": [
+            "role_and_name",
+            "label",
+            "text",
+            "accessibility",
+            "css",
+            "xpath",
+            "visual_anchor",
+            "coordinates"
+          ]
+        },
+        "role": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "selector": {
+          "type": "string"
+        },
+        "image_ref": {
+          "type": "string"
+        },
+        "x": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "strict": {
+          "type": "boolean"
+        },
+        "expected_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1
+        },
+        "stability": {
+          "enum": ["stable", "variant_specific", "fragile"]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "valueExpression": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "path"],
+          "properties": {
+            "source": {
+              "const": "input"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "path"],
+          "properties": {
+            "source": {
+              "const": "prior_output"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "value"],
+          "properties": {
+            "source": {
+              "const": "literal"
+            },
+            "value": {}
+          }
+        }
+      ]
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "description"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "url_matches",
+            "title_equals",
+            "element_visible",
+            "element_absent",
+            "text_equals",
+            "text_contains",
+            "value_equals",
+            "dialog_present",
+            "network_idle"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        },
+        "expected": {},
+        "negate": {
+          "type": "boolean",
+          "default": false
+        },
+        "settle_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30000,
+          "default": 0
+        }
+      }
+    },
+    "retryPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_attempts", "backoff_ms", "retry_on", "idempotent_only"],
+      "properties": {
+        "max_attempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "backoff_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30000
+        },
+        "retry_on": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": ["transient_timeout", "stale_target", "known_interstitial"]
+          }
+        },
+        "idempotent_only": {
+          "const": true
+        }
+      }
+    },
+    "recoveryPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "description", "trigger", "max_applications", "actions"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trigger": {
+          "$ref": "#/$defs/condition"
+        },
+        "max_applications": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/recoveryAction"
+          }
+        }
+      }
+    },
+    "recoveryAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "risk"],
+      "properties": {
+        "operation": {
+          "enum": ["click", "wait", "navigate"]
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        },
+        "value": {
+          "$ref": "#/$defs/valueExpression"
+        },
+        "risk": {
+          "enum": ["read_only", "reversible"]
+        }
+      }
+    },
+    "businessOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "description", "detector", "terminal"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "detector": {
+          "$ref": "#/$defs/condition"
+        },
+        "terminal": {
+          "const": true
+        }
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "conditions"],
+      "properties": {
+        "mode": {
+          "enum": ["all", "any"]
+        },
+        "conditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/condition"
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "discovery_run_id",
+        "goal_template",
+        "generated_at",
+        "compiler_version",
+        "model_provider",
+        "model",
+        "event_log_sha256",
+        "contains_raw_model_transcript"
+      ],
+      "properties": {
+        "discovery_run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "goal_template": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "compiler_version": {
+          "type": "string"
+        },
+        "model_provider": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": ["string", "null"]
+        },
+        "event_log_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "contains_raw_model_transcript": {
+          "const": false
+        }
+      }
+    }
+  }
+}
