@@ -21,6 +21,7 @@ export interface SurfaceAdapter {
   start(): Promise<SurfaceObservation>;
   observe(): Promise<SurfaceObservation>;
   execute(command: SurfaceCommand): Promise<SurfaceActionResult>;
+  captureScreenshot(redactions?: readonly string[]): Promise<Uint8Array>;
   close(): Promise<void>;
 }
 
@@ -215,6 +216,50 @@ export class PlaywrightSurface implements SurfaceAdapter {
     } catch (error) {
       const message = error instanceof Error ? error.name : "UnknownError";
       return { status: "FAILED", message: `Browser action failed (${message}).` };
+    }
+  }
+
+  async captureScreenshot(redactions: readonly string[] = []): Promise<Uint8Array> {
+    const page = this.#requirePage();
+    const evidenceMaskAttribute = "data-interface-cua-evidence-mask";
+    const uniqueRedactions = [...new Set(redactions.filter((value) => value.length > 0))];
+    await page.locator("body").evaluate(
+      (body, options) => {
+        const document = body.ownerDocument;
+        const showText = document.defaultView?.NodeFilter.SHOW_TEXT ?? 4;
+        const walker = document.createTreeWalker(body, showText);
+        let node = walker.nextNode();
+        while (node) {
+          const parent = node.parentElement;
+          if (
+            parent &&
+            parent !== body &&
+            options.redactions.some((redaction) => node?.textContent?.includes(redaction))
+          ) {
+            parent.setAttribute(options.attribute, "true");
+          }
+          node = walker.nextNode();
+        }
+      },
+      { attribute: evidenceMaskAttribute, redactions: uniqueRedactions },
+    );
+    try {
+      return await page.screenshot({
+        type: "png",
+        animations: "disabled",
+        caret: "hide",
+        fullPage: true,
+        mask: [
+          page.locator("input, select, textarea"),
+          page.locator(`[${evidenceMaskAttribute}="true"]`),
+        ],
+        maskColor: "#000000",
+        timeout: this.#timeoutMs,
+      });
+    } finally {
+      await page.locator(`[${evidenceMaskAttribute}="true"]`).evaluateAll((elements, attribute) => {
+        for (const element of elements) element.removeAttribute(attribute);
+      }, evidenceMaskAttribute);
     }
   }
 

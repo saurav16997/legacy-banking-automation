@@ -2,7 +2,8 @@
 
 Node.js 20+ and strict TypeScript project for a computer-use system that separates probabilistic
 discovery from deterministic execution. Phase 1 implements the synthetic, server-rendered target
-portal. Phase 2 adds its narrow, policy-controlled browser surface.
+portal. Phase 2 adds its narrow, policy-controlled browser surface. Phase 3 adds the single-agent
+probabilistic discovery run and deterministic local validation.
 
 ## Boundary
 
@@ -16,20 +17,30 @@ verifies the final review screen. The irreversible `Open Account` action is poli
 not part of the capability. Human handoff is a separate scenario driven by a seeded session-expiry
 or identity-verification interruption.
 
-Phase 2 contains no AI, discovery reasoning, artifact compilation, deterministic replay, OpenAI
-Agents SDK calls, or final human-handoff orchestration. The portal's identity-verification page is a
-deterministic target scenario used to test the adapter's `HANDOFF_REQUIRED` boundary.
+Phase 3 uses `@openai/agents` only for discovery decisions. Artifact compilation, deterministic
+replay, and final human-handoff orchestration remain unimplemented. The portal's
+identity-verification page is a deterministic target scenario used to test the `HANDOFF_REQUIRED`
+boundary.
 
 ## Phase 2 surface adapter
 
-`PlaywrightSurface` implements only four public operations: `start`, `observe`, `execute`, and
-`close`. Commands are limited to element-reference-based click, fill, and selection plus same-origin
-navigation. Raw browser objects, selectors, XPath, and JavaScript evaluation are not public APIs.
+`PlaywrightSurface` implements bounded lifecycle, observation, execution, and evidence screenshot
+operations. Agent commands are limited to element-reference-based click, fill, and selection plus
+same-origin navigation; the screenshot hook is deterministic host-only evidence support. Raw browser
+objects, selectors, XPath, and JavaScript evaluation are not public APIs.
 
 Every observation creates a fresh ID and ephemeral element references. Policy validates ownership,
 risk, trusted-classification configuration, and navigation origin before interaction. Page metadata
 is ignored unless explicitly trusted; missing or invalid classification fails closed. Details are
 documented in [docs/surface-adapter.md](docs/surface-adapter.md).
+
+## Phase 3 discovery
+
+The discovery agent receives six narrow tools over the existing surface adapter. Values are supplied
+through named input references and resolved only by a local vault. Deterministic code enforces run
+limits, records sanitized evidence, and validates the final review state before returning success.
+See [docs/discovery-run.md](docs/discovery-run.md) for tools, completion checks, evidence rules, and
+live-run setup.
 
 ## Setup
 
@@ -38,7 +49,25 @@ npm install
 npx playwright install chromium
 ```
 
-No API key or external service is needed.
+No API key or external service is needed for tests. A live discovery run requires the environment
+variables documented below and makes an OpenAI API request.
+
+## Run discovery
+
+Start the target portal separately. Then set `OPENAI_API_KEY`, `OPENAI_MODEL`, `TARGET_BASE_URL`,
+and `PORTAL_PASSWORD` in the discovery shell and run:
+
+```powershell
+npm run discover:prepare:headed
+```
+
+Use `npm run discover:prepare` for headless Chromium. The generic `npm run discover` entry remains
+available for direct CLI use, but the task-specific commands avoid Windows argument-forwarding
+differences.
+
+The CLI does not create `.env` or start the portal. It reads runtime variables from the shell and
+can load an existing local `.env` without overriding shell values; it prints only a sanitized run
+summary. A ChatGPT or Codex login is not an OpenAI API credential.
 
 ## Start the target portal
 

@@ -14,12 +14,16 @@
     "format": "prettier --write .",
     "test": "vitest run tests",
     "test:e2e": "vitest run tests/e2e --passWithNoTests",
-    "target:start": "tsx target_app/server.ts"
+    "target:start": "tsx target_app/server.ts",
+    "discover": "tsx src/cli/index.ts",
+    "discover:prepare": "tsx src/cli/index.ts --task=prepare_savings_subaccount",
+    "discover:prepare:headed": "tsx src/cli/index.ts --task=prepare_savings_subaccount --headed"
   },
   "dependencies": {
     "@openai/agents": "^0.3.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
+    "dotenv": "^18.0.1",
     "ejs": "^6.0.1",
     "express": "^5.1.0",
     "express-session": "^1.19.0",

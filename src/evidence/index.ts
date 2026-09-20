@@ -1,3 +1,5 @@
+export * from "./discovery-recorder.js";
+
 /** Stable reference to redacted run evidence. */
 export interface EvidenceReference {
   readonly evidenceId: string;

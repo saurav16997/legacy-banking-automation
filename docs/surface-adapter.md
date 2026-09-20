@@ -3,9 +3,10 @@
 ## Architectural boundary
 
 Playwright is the first implementation detail behind `SurfaceAdapter`; it is not the architecture.
-The public contract consists of `start`, `observe`, `execute`, and `close`. A future discovery agent
-and deterministic replay engine will both depend on that contract and will therefore pass through
-the same policy checks, target-resolution rules, timeouts, and redaction behavior.
+The browser-control contract consists of `start`, `observe`, `execute`, and `close`. A safe
+`captureScreenshot` evidence hook is available only to deterministic host code and is not exposed as
+an agent tool. Discovery and deterministic replay both depend on this boundary and therefore pass
+through the same policy checks, target-resolution rules, timeouts, and redaction behavior.
 
 The adapter never returns a Playwright `Browser`, `BrowserContext`, `Page`, or `Locator`. It also
 has no public selector, JavaScript evaluation, script, upload, or download operation. Callers can
@@ -60,13 +61,13 @@ never `networkidle`. Links and direct navigation are checked against the allowed
 
 ## Deferred responsibilities
 
-Phase 2 deliberately does not implement:
+The adapter itself deliberately does not implement:
 
-- OpenAI Agents SDK calls or discovery reasoning;
+- OpenAI Agents SDK calls or discovery reasoning (these remain in the Phase 3 discovery layer);
 - action recording or evidence persistence;
 - artifact compilation or approval;
 - deterministic artifact replay and postcondition evaluation;
-- screenshots and frame-tree normalization;
+- frame-tree normalization;
 - final human-handoff coordination, operator resume signals, or handoff auditing; or
 - outcome classification.
 

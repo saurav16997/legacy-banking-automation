@@ -1,9 +1,9 @@
 # Architecture
 
-The project targets Node.js 20+ with strict TypeScript. `@openai/agents` remains confined to one
-future probabilistic discovery agent. Phase 2 implements Playwright only behind `SurfaceAdapter`;
-the browser, context, page, locators, selectors, and script evaluation are not exposed through the
-public API. Discovery and replay are still deferred and must eventually share this boundary.
+The project targets Node.js 20+ with strict TypeScript. Phase 3 confines `@openai/agents` to one
+probabilistic discovery agent. Playwright remains only behind `SurfaceAdapter`; the browser,
+context, page, locators, selectors, and script evaluation are not exposed through the public API.
+Deterministic replay remains deferred and must eventually share this boundary.
 
 # Artifact schema
 
@@ -17,7 +17,8 @@ targets by accessible role/name/label, and requires exactly one match. Successfu
 observation registry. Stale references, ambiguity, external navigation, invalid metadata, and
 irreversible actions fail closed. Missing ownership is `NONE`, missing risk is `IRREVERSIBLE`, and
 page hints are ignored unless the host explicitly trusts them. Stable test-ID policy configuration
-can override hints and takes precedence. Replay and postcondition evaluation remain pending.
+can override hints and takes precedence. Discovery completion uses deterministic review-state and
+trajectory checks; replay remains pending.
 
 # Heterogeneity & multi-tenant
 
@@ -33,13 +34,14 @@ session remains open. Final handoff coordination and explicit operator resume ar
 
 # Safety
 
-The future model will receive only bounded surface commands, never raw Playwright or arbitrary
-browser code. Sensitive values are redacted in observations and results. Operations use bounded
-timeouts, same-origin navigation, no `networkidle` dependency, and deterministic pre-interaction
-policy checks.
+The discovery model receives only six strict tools over input references and ephemeral elements,
+never raw Playwright or arbitrary browser code. Resolved inputs are replaced by placeholders in tool
+results and JSON evidence. Operations use bounded turns, actions, repetition, elapsed time,
+same-origin navigation, no `networkidle` dependency, and deterministic pre-interaction policy
+checks. Offline tests inject a scripted runner and make no OpenAI calls.
 
 # Cuts
 
-No discovery agent, Agents SDK calls, artifact compiler, deterministic replay engine, final handoff
-orchestration, MCP, multi-agent framework, autonomous fallback, queues, cloud infrastructure, or
-real banking data is implemented in Phase 2.
+No artifact compiler, deterministic replay engine, final handoff orchestration, automatic HUMAN or
+irreversible action, MCP, multi-agent system, autonomous fallback, queue, cloud infrastructure, or
+real banking data is implemented in Phase 3.
