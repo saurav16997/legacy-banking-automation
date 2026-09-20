@@ -1,0 +1,24 @@
+<%- include("partials/header", { title: "Member Profile", authenticated: true }) %>
+<div class="breadcrumbs"><a href="/dashboard">Home</a> &gt; <a href="/members/search">Member Search</a> &gt; <%= member.id %></div>
+<section class="panel">
+  <div class="section-heading">
+    <div><h1>Member Profile</h1><p class="record-id">Member ID: <strong><%= member.id %></strong></p></div>
+    <span class="status"><%= member.status %></span>
+  </div>
+  <table class="details-table"><tbody>
+    <tr><th scope="row">Member name</th><td><%= member.name %></td></tr>
+    <tr><th scope="row">Data classification</th><td>Synthetic training record</td></tr>
+  </tbody></table>
+</section>
+<section class="panel">
+  <div class="section-heading"><h2>Accounts</h2><a class="button" href="/members/<%= member.id %>/savings/new">Add savings subaccount</a></div>
+  <table>
+    <thead><tr><th>Type</th><th>Product</th><th>Nickname</th><th>Account</th><th>Balance</th></tr></thead>
+    <tbody>
+      <% member.accounts.forEach(function(account) { %>
+        <tr><td><%= account.type %></td><td><%= account.product %></td><td><%= account.nickname %></td><td>ending <%= account.lastFour %></td><td>$<%= (account.balanceCents / 100).toFixed(2) %></td></tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>
+<%- include("partials/footer") %>

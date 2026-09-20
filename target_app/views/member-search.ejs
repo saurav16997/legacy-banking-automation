@@ -1,0 +1,15 @@
+<%- include("partials/header", { title: "Member Search", authenticated: true }) %>
+<div class="breadcrumbs"><a href="/dashboard">Home</a> &gt; Member Search</div>
+<section class="panel">
+  <h1>Member Search</h1>
+  <p>Search by the complete member ID.</p>
+  <% if (error) { %><div class="alert error" role="alert"><%= error %></div><% } %>
+  <form action="/members/search" method="post" class="inline-form">
+    <div>
+      <label for="memberId">Member ID</label>
+      <input id="memberId" name="memberId" value="<%= query %>" placeholder="M-00000" required />
+    </div>
+    <button type="submit">Search</button>
+  </form>
+</section>
+<%- include("partials/footer") %>

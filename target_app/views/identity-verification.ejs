@@ -1,0 +1,15 @@
+<%- include("partials/header", { title: "Identity Verification Required", authenticated: true }) %>
+<div class="breadcrumbs"><a href="/dashboard">Home</a> &gt; Member <%= memberId %> &gt; Verification</div>
+<section class="panel interruption" data-page-state="human-verification-required">
+  <h1>Identity Verification Required</h1>
+  <div class="alert warning" role="status">
+    <strong>Human action required.</strong> The savings draft is saved. An authorized employee must complete verification in this browser session before review can continue.
+  </div>
+  <% if (error) { %><div class="alert error" role="alert"><%= error %></div><% } %>
+  <form action="/members/<%= memberId %>/identity-verification" method="post" class="stacked-form">
+    <label for="verificationCode">Synthetic verification code</label>
+    <input id="verificationCode" name="verificationCode" inputmode="numeric" autocomplete="off" required />
+    <button type="submit">Verify and continue</button>
+  </form>
+</section>
+<%- include("partials/footer") %>

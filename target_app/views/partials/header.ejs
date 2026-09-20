@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= title %> | Heritage Community Credit Union</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="masthead">
+      <div>
+        <p class="system-name">Heritage Community Credit Union</p>
+        <p class="system-subtitle">Employee Account Services</p>
+      </div>
+      <% if (authenticated) { %>
+        <form action="/logout" method="post">
+          <button class="link-button" type="submit">Sign out</button>
+        </form>
+      <% } %>
+    </header>
+    <nav class="utility-nav" aria-label="Primary navigation">
+      <a href="/dashboard">Home</a>
+      <a href="/members/search">Member Search</a>
+    </nav>
+    <main class="page-shell">

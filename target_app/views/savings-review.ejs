@@ -1,0 +1,27 @@
+<%- include("partials/header", { title: "Review Savings Subaccount", authenticated: true }) %>
+<div class="breadcrumbs"><a href="/dashboard">Home</a> &gt; Member <%= member.id %> &gt; Review Savings</div>
+<section class="panel" data-page-state="<%= draft.confirmedAccountId ? "account-opened" : "ready-for-review" %>">
+  <% if (draft.confirmedAccountId) { %>
+    <h1>Savings Account Opened</h1>
+    <div class="alert success" role="status">The account was created successfully. Confirmation: <strong><%= draft.confirmedAccountId %></strong></div>
+  <% } else { %>
+    <h1>Review Savings Subaccount</h1>
+    <div class="alert info" role="status"><strong>Ready for review.</strong> No account has been created. Confirm all details before opening the account.</div>
+  <% } %>
+  <table class="details-table"><tbody>
+    <tr><th scope="row">Member</th><td><%= member.name %> (<%= member.id %>)</td></tr>
+    <tr><th scope="row">Product</th><td><%= draft.product %></td></tr>
+    <tr><th scope="row">Nickname</th><td><%= draft.nickname %></td></tr>
+    <tr><th scope="row">Initial deposit</th><td>$<%= (draft.initialDepositCents / 100).toFixed(2) %></td></tr>
+    <tr><th scope="row">Funding account</th><td><%= fundingAccount.product %> — checking ending <%= fundingAccount.lastFour %></td></tr>
+  </tbody></table>
+  <% if (!draft.confirmedAccountId) { %>
+    <div class="final-action">
+      <p><strong>Final action:</strong> Opening the account changes member data.</p>
+      <form action="/members/<%= member.id %>/savings/confirm" method="post"><button class="danger" type="submit">Open Account</button></form>
+    </div>
+  <% } else { %>
+    <p><a class="button" href="/members/<%= member.id %>">Return to member profile</a></p>
+  <% } %>
+</section>
+<%- include("partials/footer") %>
