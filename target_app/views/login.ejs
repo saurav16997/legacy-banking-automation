@@ -1,14 +1,14 @@
 <%- include("partials/header", { title: "Operator Login", authenticated: false }) %>
-<section class="panel narrow">
+<section class="panel narrow" data-page-state="operator-login">
   <h1>Employee Portal Login</h1>
   <p>Enter your assigned training credentials.</p>
   <% if (error) { %><div class="alert error" role="alert"><%= error %></div><% } %>
   <form action="/login" method="post" class="stacked-form">
     <label for="username">Operator username</label>
-    <input id="username" name="username" autocomplete="username" required />
+    <input id="username" name="username" autocomplete="username" required data-control-owner="AUTOMATION" data-action-risk="SAFE" />
     <label for="password">Password</label>
-    <input id="password" name="password" type="password" autocomplete="current-password" required />
-    <button type="submit">Log in</button>
+    <input id="password" name="password" type="password" autocomplete="current-password" required data-control-owner="AUTOMATION" data-action-risk="SENSITIVE" data-sensitive="true" />
+    <button type="submit" data-control-owner="AUTOMATION" data-action-risk="SAFE">Log in</button>
   </form>
 </section>
 <%- include("partials/footer") %>

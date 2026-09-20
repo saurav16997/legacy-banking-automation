@@ -14,12 +14,12 @@
       </div>
       <% if (authenticated) { %>
         <form action="/logout" method="post">
-          <button class="link-button" type="submit">Sign out</button>
+          <button class="link-button" type="submit" data-control-owner="AUTOMATION" data-action-risk="SAFE">Sign out</button>
         </form>
       <% } %>
     </header>
     <nav class="utility-nav" aria-label="Primary navigation">
-      <a href="/dashboard">Home</a>
-      <a href="/members/search">Member Search</a>
+      <a href="/dashboard" data-control-owner="AUTOMATION" data-action-risk="SAFE">Home</a>
+      <a href="/members/search" data-control-owner="AUTOMATION" data-action-risk="SAFE">Member Search</a>
     </nav>
     <main class="page-shell">

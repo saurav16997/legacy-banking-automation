@@ -1,5 +1,5 @@
 <%- include("partials/header", { title: "Review Savings Subaccount", authenticated: true }) %>
-<div class="breadcrumbs"><a href="/dashboard">Home</a> &gt; Member <%= member.id %> &gt; Review Savings</div>
+<div class="breadcrumbs"><a href="/dashboard" data-control-owner="AUTOMATION" data-action-risk="SAFE">Home</a> &gt; Member <%= member.id %> &gt; Review Savings</div>
 <section class="panel" data-page-state="<%= draft.confirmedAccountId ? "account-opened" : "ready-for-review" %>">
   <% if (draft.confirmedAccountId) { %>
     <h1>Savings Account Opened</h1>
@@ -18,10 +18,10 @@
   <% if (!draft.confirmedAccountId) { %>
     <div class="final-action">
       <p><strong>Final action:</strong> Opening the account changes member data.</p>
-      <form action="/members/<%= member.id %>/savings/confirm" method="post"><button class="danger" type="submit">Open Account</button></form>
+      <form action="/members/<%= member.id %>/savings/confirm" method="post"><button class="danger" type="submit" data-control-owner="NONE" data-action-risk="IRREVERSIBLE">Open Account</button></form>
     </div>
   <% } else { %>
-    <p><a class="button" href="/members/<%= member.id %>">Return to member profile</a></p>
+    <p><a class="button" href="/members/<%= member.id %>" data-control-owner="AUTOMATION" data-action-risk="SAFE">Return to member profile</a></p>
   <% } %>
 </section>
 <%- include("partials/footer") %>

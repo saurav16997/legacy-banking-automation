@@ -1,10 +1,10 @@
 <%- include("partials/header", { title: "Dashboard", authenticated: true }) %>
 <div class="breadcrumbs">Home</div>
-<section class="panel">
+<section class="panel" data-page-state="employee-dashboard">
   <h1>Employee Dashboard</h1>
   <p class="welcome">Welcome to Account Services.</p>
   <div class="menu-grid">
-    <a class="menu-card" href="/members/search">
+    <a class="menu-card" href="/members/search" data-control-owner="AUTOMATION" data-action-risk="SAFE">
       <strong>Member Search</strong>
       <span>Locate a member and view account services.</span>
     </a>

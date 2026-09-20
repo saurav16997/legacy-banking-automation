@@ -1,6 +1,6 @@
 <%- include("partials/header", { title: "Add Savings Subaccount", authenticated: true }) %>
-<div class="breadcrumbs"><a href="/dashboard">Home</a> &gt; <a href="/members/search">Member Search</a> &gt; <a href="/members/<%= member.id %>"><%= member.id %></a> &gt; Add Savings</div>
-<section class="panel">
+<div class="breadcrumbs"><a href="/dashboard" data-control-owner="AUTOMATION" data-action-risk="SAFE">Home</a> &gt; <a href="/members/search" data-control-owner="AUTOMATION" data-action-risk="SAFE">Member Search</a> &gt; <a href="/members/<%= member.id %>" data-control-owner="AUTOMATION" data-action-risk="SAFE"><%= member.id %></a> &gt; Add Savings</div>
+<section class="panel" data-page-state="savings-application">
   <h1>Add Savings Subaccount</h1>
   <p>Member: <strong><%= member.name %> (<%= member.id %>)</strong></p>
   <% if (errors.length) { %>
@@ -8,22 +8,22 @@
   <% } %>
   <form action="/members/<%= member.id %>/savings/new" method="post" class="stacked-form wide-form">
     <label for="product">Product</label>
-    <select id="product" name="product" required>
+    <select id="product" name="product" required data-control-owner="AUTOMATION" data-action-risk="SAFE">
       <option value="">Select a product</option>
       <option value="Growth Savings" <%= values.product === "Growth Savings" ? "selected" : "" %>>Growth Savings</option>
     </select>
     <label for="nickname">Account nickname</label>
-    <input id="nickname" name="nickname" value="<%= values.nickname %>" maxlength="40" required />
+    <input id="nickname" name="nickname" value="<%= values.nickname %>" maxlength="40" required data-control-owner="AUTOMATION" data-action-risk="SAFE" />
     <label for="initialDeposit">Initial deposit</label>
-    <div class="money-input"><span aria-hidden="true">$</span><input id="initialDeposit" name="initialDeposit" inputmode="decimal" value="<%= values.initialDeposit %>" placeholder="0.00" required /></div>
+    <div class="money-input"><span aria-hidden="true">$</span><input id="initialDeposit" name="initialDeposit" inputmode="decimal" value="<%= values.initialDeposit %>" placeholder="0.00" required data-control-owner="AUTOMATION" data-action-risk="SENSITIVE" data-sensitive="true" /></div>
     <label for="fundingAccountId">Funding account</label>
-    <select id="fundingAccountId" name="fundingAccountId" required>
+    <select id="fundingAccountId" name="fundingAccountId" required data-control-owner="AUTOMATION" data-action-risk="SENSITIVE" data-sensitive="true">
       <option value="">Select an account</option>
       <% member.accounts.filter(function(account) { return account.type === "checking"; }).forEach(function(account) { %>
         <option value="<%= account.id %>" <%= values.fundingAccountId === account.id ? "selected" : "" %>><%= account.product %> — checking ending <%= account.lastFour %></option>
       <% }) %>
     </select>
-    <div class="form-actions"><a href="/members/<%= member.id %>">Cancel</a><button type="submit">Continue to review</button></div>
+    <div class="form-actions"><a href="/members/<%= member.id %>" data-control-owner="AUTOMATION" data-action-risk="SAFE">Cancel</a><button type="submit" data-control-owner="AUTOMATION" data-action-risk="SAFE">Continue to review</button></div>
   </form>
 </section>
 <%- include("partials/footer") %>

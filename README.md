@@ -1,8 +1,8 @@
 # interface.ai Computer-Use Automation System
 
 Node.js 20+ and strict TypeScript project for a computer-use system that separates probabilistic
-discovery from deterministic execution. Phase 1 implements only a synthetic, server-rendered target
-portal for later automation work.
+discovery from deterministic execution. Phase 1 implements the synthetic, server-rendered target
+portal. Phase 2 adds its narrow, policy-controlled browser surface.
 
 ## Boundary
 
@@ -16,9 +16,20 @@ verifies the final review screen. The irreversible `Open Account` action is poli
 not part of the capability. Human handoff is a separate scenario driven by a seeded session-expiry
 or identity-verification interruption.
 
-Phase 1 contains no AI, discovery, artifact compilation, deterministic replay, OpenAI Agents SDK
-calls, or browser-adapter logic. The portal's identity-verification page is a deterministic target
-scenario used to test a future human handoff.
+Phase 2 contains no AI, discovery reasoning, artifact compilation, deterministic replay, OpenAI
+Agents SDK calls, or final human-handoff orchestration. The portal's identity-verification page is a
+deterministic target scenario used to test the adapter's `HANDOFF_REQUIRED` boundary.
+
+## Phase 2 surface adapter
+
+`PlaywrightSurface` implements only four public operations: `start`, `observe`, `execute`, and
+`close`. Commands are limited to element-reference-based click, fill, and selection plus same-origin
+navigation. Raw browser objects, selectors, XPath, and JavaScript evaluation are not public APIs.
+
+Every observation creates a fresh ID and ephemeral element references. Policy validates ownership,
+risk, trusted-classification configuration, and navigation origin before interaction. Page metadata
+is ignored unless explicitly trusted; missing or invalid classification fails closed. Details are
+documented in [docs/surface-adapter.md](docs/surface-adapter.md).
 
 ## Setup
 
@@ -86,4 +97,6 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+npm test
+npm run test:e2e
 ```
