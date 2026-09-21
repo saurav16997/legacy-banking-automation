@@ -359,6 +359,42 @@ describe("controlled Playwright surface adapter", () => {
     }
   });
 
+  it("applies the caller timeout to the real Playwright action and settles as TIMED_OUT", async () => {
+    const timeoutApp = express();
+    timeoutApp.get("/login", (_request, response) => {
+      response.type("html").send(`
+        <main data-page-state="timeout-test">
+          <h1>Timeout test</h1>
+          <button disabled data-control-owner="AUTOMATION" data-action-risk="SAFE">Delayed action</button>
+        </main>
+      `);
+    });
+    const timeoutServer = timeoutApp.listen(0);
+    const surface = createSurface(serverUrl(timeoutServer), { timeoutMs: 1_000 });
+    try {
+      const observation = await surface.start();
+      const target = element(observation, "Delayed action", "button");
+      const result = await surface.execute(
+        {
+          operation: "click",
+          observationId: observation.observationId,
+          elementRef: target.elementRef,
+        },
+        { timeoutMs: 25 },
+      );
+
+      expect(result).toMatchObject({ status: "TIMED_OUT" });
+    } finally {
+      await surface.close();
+      await new Promise<void>((resolve, reject) => {
+        timeoutServer.close((error) => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
+    }
+  });
+
   it("closes browser resources cleanly and idempotently", async () => {
     const surface = createSurface();
     await surface.start();

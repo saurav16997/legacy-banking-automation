@@ -32,6 +32,21 @@ const initialMembers: Member[] = [
       },
     ],
   },
+  {
+    id: "M-20017",
+    name: "Casey Juniper",
+    status: "Active",
+    accounts: [
+      {
+        id: "CHK-9021",
+        type: "checking",
+        product: "Essential Checking",
+        nickname: "Household Checking",
+        balanceCents: 318_940,
+        lastFour: "9021",
+      },
+    ],
+  },
 ];
 
 function cloneInitialMembers(): Member[] {

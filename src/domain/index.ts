@@ -76,6 +76,7 @@ export const SurfaceActionStatusSchema = z.enum([
   "HANDOFF_REQUIRED",
   "STALE_OBSERVATION",
   "AMBIGUOUS_TARGET",
+  "TIMED_OUT",
   "FAILED",
 ]);
 export type SurfaceActionStatus = z.infer<typeof SurfaceActionStatusSchema>;

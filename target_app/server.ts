@@ -19,7 +19,9 @@ export interface TargetApp {
 }
 
 function readScenario(value: string | undefined): TargetScenario {
-  return value === "identity_verification_on_review" ? value : "normal";
+  return value === "identity_verification_on_review" || value === "ambiguous_continue_control"
+    ? value
+    : "normal";
 }
 
 export function createTargetApp(options: TargetAppOptions = {}): TargetApp {

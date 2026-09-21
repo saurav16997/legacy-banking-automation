@@ -1,4 +1,4 @@
-import type { SurfaceAdapter } from "../../src/browser/index.js";
+import type { SurfaceAdapter, SurfaceOperationOptions } from "../../src/browser/index.js";
 import type {
   SurfaceActionResult,
   SurfaceCommand,
@@ -22,9 +22,15 @@ export function makeObservation(overrides: Partial<SurfaceObservation> = {}): Su
 export class FakeSurfaceAdapter implements SurfaceAdapter {
   observation: SurfaceObservation;
   readonly commands: SurfaceCommand[] = [];
+  readonly startOptions: SurfaceOperationOptions[] = [];
+  readonly observeOptions: SurfaceOperationOptions[] = [];
+  readonly executeOptions: SurfaceOperationOptions[] = [];
   readonly screenshotRedactions: string[][] = [];
   closed = false;
-  executeHandler: (command: SurfaceCommand) => SurfaceActionResult | Promise<SurfaceActionResult>;
+  executeHandler: (
+    command: SurfaceCommand,
+    options?: SurfaceOperationOptions,
+  ) => SurfaceActionResult | Promise<SurfaceActionResult>;
 
   constructor(observation = makeObservation()) {
     this.observation = observation;
@@ -35,17 +41,23 @@ export class FakeSurfaceAdapter implements SurfaceAdapter {
     });
   }
 
-  start(): Promise<SurfaceObservation> {
+  start(options: SurfaceOperationOptions = {}): Promise<SurfaceObservation> {
+    this.startOptions.push(options);
     return Promise.resolve(this.observation);
   }
 
-  observe(): Promise<SurfaceObservation> {
+  observe(options: SurfaceOperationOptions = {}): Promise<SurfaceObservation> {
+    this.observeOptions.push(options);
     return Promise.resolve(this.observation);
   }
 
-  async execute(command: SurfaceCommand): Promise<SurfaceActionResult> {
+  async execute(
+    command: SurfaceCommand,
+    options: SurfaceOperationOptions = {},
+  ): Promise<SurfaceActionResult> {
     this.commands.push(command);
-    const result = await this.executeHandler(command);
+    this.executeOptions.push(options);
+    const result = await this.executeHandler(command, options);
     if (result.observation) this.observation = result.observation;
     return result;
   }

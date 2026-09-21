@@ -5,7 +5,7 @@ discovery from deterministic execution. Phase 1 implements the synthetic, server
 portal. Phase 2 adds its narrow, policy-controlled browser surface. Phase 3 adds the single-agent
 probabilistic discovery run and deterministic local validation. Phase 4 compiles one verified,
 sanitized successful trajectory into a draft, versioned capability artifact without model or network
-access.
+access. Phase 5 deterministically replays that artifact through the same bounded surface.
 
 ## Boundary
 
@@ -19,10 +19,10 @@ verifies the final review screen. The irreversible `Open Account` action is poli
 not part of the capability. Human handoff is a separate scenario driven by a seeded session-expiry
 or identity-verification interruption.
 
-Phase 3 uses `@openai/agents` only for discovery decisions. Phase 4 artifact compilation is entirely
-deterministic. Deterministic replay and final human-handoff orchestration remain unimplemented. The
-portal's identity-verification page is a deterministic target scenario used to test the
-`HANDOFF_REQUIRED` boundary.
+Phase 3 uses `@openai/agents` only for discovery decisions. Artifact compilation and replay are
+entirely deterministic and make zero model calls. Final resumable human-handoff orchestration
+remains unimplemented. The portal's identity-verification page is a deterministic target scenario
+used to test the `intervention_required` boundary.
 
 ## Phase 2 surface adapter
 
@@ -91,6 +91,27 @@ This command makes no model or network request. It writes
 evidence is byte-idempotent; the compiler refuses to overwrite different bytes at the same
 capability version. See [docs/capability-artifact.md](docs/capability-artifact.md).
 
+## Phase 5 deterministic replay
+
+Replay validates invocation inputs, resolves ordered semantic target recipes to exactly one live
+control, re-checks ownership and risk, executes only through `SurfaceAdapter`, verifies every page
+state and final checkpoint, and writes a redacted artifact-linked evidence log. It returns
+structured success, business-outcome, intervention, or failure variants and never falls back to
+discovery.
+
+The checked-in artifact is deliberately `DRAFT`, so a local run requires an explicit demo override:
+
+```powershell
+$env:TARGET_BASE_URL="http://localhost:3000"
+$env:PORTAL_PASSWORD="creditunion-demo"
+npm run replay:prepare -- --allow-draft
+```
+
+The default replay uses the distinct synthetic member `M-20017`, nickname `Emergency Fund`, deposit
+`125.00`, and that member's checking account. See
+[docs/deterministic-replay.md](docs/deterministic-replay.md) for input overrides, evidence, and
+failure behavior.
+
 ## Start the target portal
 
 Normal mode:
@@ -104,6 +125,9 @@ Open `http://localhost:3000` and use these entirely synthetic training values:
 - Operator username: `demo.operator`
 - Password: `creditunion-demo`
 - Member ID: `M-10042`
+
+Deterministic replay also uses the synthetic eligible member `M-20017`; neither fixture represents a
+real person or account.
 
 Manual walkthrough:
 
@@ -141,6 +165,11 @@ For automated tests only, setting `ENABLE_TEST_CONTROLS=true` exposes `POST /__t
 restores fixtures and clears sessions. That endpoint does not exist in normal mode.
 
 ## Checks
+
+The repository's Prettier version does not parse EJS, so `target_app/views/**/*.ejs` is explicitly
+excluded in `.prettierignore`. The generated capability artifact is also excluded because its
+compiler-canonical bytes are SHA-256 linked. TypeScript, ordinary JSON, Markdown, and other
+supported files are formatted by the documented command.
 
 ```shell
 npm run format

@@ -18,11 +18,23 @@ import {
 } from "../policy/index.js";
 
 export interface SurfaceAdapter {
-  start(): Promise<SurfaceObservation>;
-  observe(): Promise<SurfaceObservation>;
-  execute(command: SurfaceCommand): Promise<SurfaceActionResult>;
+  start(options?: SurfaceOperationOptions): Promise<SurfaceObservation>;
+  observe(options?: SurfaceOperationOptions): Promise<SurfaceObservation>;
+  execute(command: SurfaceCommand, options?: SurfaceOperationOptions): Promise<SurfaceActionResult>;
   captureScreenshot(redactions?: readonly string[]): Promise<Uint8Array>;
   close(): Promise<void>;
+}
+
+/** Surface-neutral bound which an adapter must settle before returning. */
+export interface SurfaceOperationOptions {
+  readonly timeoutMs?: number;
+}
+
+export class SurfaceTimeoutError extends Error {
+  constructor(message = "The surface operation exceeded its timeout.") {
+    super(message);
+    this.name = "SurfaceTimeoutError";
+  }
 }
 
 export interface PlaywrightSurfaceOptions {
@@ -87,51 +99,60 @@ export class PlaywrightSurface implements SurfaceAdapter {
     });
   }
 
-  async start(): Promise<SurfaceObservation> {
-    if (this.#page) return this.observe();
+  async start(options: SurfaceOperationOptions = {}): Promise<SurfaceObservation> {
+    if (this.#page) return this.observe(options);
     try {
       this.#browser = await chromium.launch({ headless: this.#headless });
       this.#context = await this.#browser.newContext({ acceptDownloads: false });
       this.#page = await this.#context.newPage();
       this.#page.setDefaultTimeout(this.#timeoutMs);
+      const deadline = this.#operationDeadline(options);
       await this.#page.goto(this.#initialUrl.href, {
-        timeout: this.#timeoutMs,
+        timeout: this.#remainingMs(deadline),
         waitUntil: "domcontentloaded",
       });
-      return await this.observe();
+      return await this.observe({ timeoutMs: this.#followupTimeoutMs(options, deadline) });
     } catch (error) {
       await this.close();
+      if (this.#isTimeout(error)) throw new SurfaceTimeoutError();
       throw error;
     }
   }
 
-  async observe(): Promise<SurfaceObservation> {
+  async observe(options: SurfaceOperationOptions = {}): Promise<SurfaceObservation> {
     const page = this.#requirePage();
+    const deadline = this.#operationDeadline(options);
+    this.#applyRemainingTimeout(page, deadline);
     const observationId = randomUUID();
-    const labelMap = await this.#readLabels(page);
+    const labelMap = await this.#readLabels(page, deadline);
     const elements: ObservedElement[] = [];
     const nextRegistry = new Map<string, ElementRegistryEntry>();
     const interactive = page.locator("button, a[href], input, select, textarea");
     const count = await interactive.count();
 
     for (let index = 0; index < count; index += 1) {
+      this.#applyRemainingTimeout(page, deadline);
       const locator = interactive.nth(index);
       if (!(await locator.isVisible())) continue;
-      const observed = await this.#observeElement(locator, labelMap, observationId);
+      const observed = await this.#observeElement(locator, labelMap, observationId, deadline);
       elements.push(observed.element);
       nextRegistry.set(observed.element.elementRef, observed.entry);
       this.#referenceOrigins.set(observed.element.elementRef, observationId);
     }
 
+    this.#applyRemainingTimeout(page, deadline);
     const headingLocator = page.getByRole("heading", { level: 1 }).first();
     const primaryHeading =
       (await headingLocator.count()) > 0 ? (await headingLocator.innerText()).trim() : undefined;
+    this.#applyRemainingTimeout(page, deadline);
     const pageStateLocator = page.locator("[data-page-state]").first();
     const pageState =
       (await pageStateLocator.count()) > 0
         ? ((await pageStateLocator.getAttribute("data-page-state")) ?? undefined)
         : undefined;
+    this.#applyRemainingTimeout(page, deadline);
     const visibleText = (await page.locator("body").innerText()).slice(0, MAX_VISIBLE_TEXT_LENGTH);
+    this.#applyRemainingTimeout(page, deadline);
     const observation: SurfaceObservation = {
       observationId,
       url: page.url(),
@@ -147,20 +168,30 @@ export class PlaywrightSurface implements SurfaceAdapter {
     return observation;
   }
 
-  async execute(command: SurfaceCommand): Promise<SurfaceActionResult> {
+  async execute(
+    command: SurfaceCommand,
+    options: SurfaceOperationOptions = {},
+  ): Promise<SurfaceActionResult> {
     const page = this.#page;
     if (!page) return { status: "FAILED", message: "The browser session is not open." };
+    const deadline = this.#operationDeadline(options);
 
     try {
+      this.#applyRemainingTimeout(page, deadline);
       if (command.operation === "navigate") {
         const targetUrl = new URL(command.url, page.url()).href;
         const decision = this.#policy.evaluateNavigation(targetUrl, this.#baseUrl.origin);
         if (decision.disposition !== "ALLOW") return this.#policyResult(decision);
-        await page.goto(targetUrl, { timeout: this.#timeoutMs, waitUntil: "domcontentloaded" });
+        await page.goto(targetUrl, {
+          timeout: this.#remainingMs(deadline),
+          waitUntil: "domcontentloaded",
+        });
         return {
           status: "EXECUTED",
           message: "Same-origin navigation completed.",
-          observation: await this.observe(),
+          observation: await this.observe({
+            timeoutMs: this.#followupTimeoutMs(options, deadline),
+          }),
         };
       }
 
@@ -193,6 +224,7 @@ export class PlaywrightSurface implements SurfaceAdapter {
       }
 
       const locator = this.#resolveSemanticTarget(page, entry.semanticTarget);
+      this.#applyRemainingTimeout(page, deadline);
       const matchCount = await locator.count();
       if (matchCount !== 1) {
         return {
@@ -202,18 +234,23 @@ export class PlaywrightSurface implements SurfaceAdapter {
       }
 
       if (command.operation === "click") {
-        await locator.click({ timeout: this.#timeoutMs });
+        await locator.click({ timeout: this.#remainingMs(deadline) });
       } else if (command.operation === "fill") {
-        await locator.fill(command.value, { timeout: this.#timeoutMs });
+        await locator.fill(command.value, { timeout: this.#remainingMs(deadline) });
       } else {
-        await locator.selectOption(command.option, { timeout: this.#timeoutMs });
+        await locator.selectOption(command.option, { timeout: this.#remainingMs(deadline) });
       }
       return {
         status: "EXECUTED",
         message: `${command.operation} completed.`,
-        observation: await this.observe(),
+        observation: await this.observe({
+          timeoutMs: this.#followupTimeoutMs(options, deadline),
+        }),
       };
     } catch (error) {
+      if (this.#isTimeout(error)) {
+        return { status: "TIMED_OUT", message: "The bounded surface operation timed out." };
+      }
       const message = error instanceof Error ? error.name : "UnknownError";
       return { status: "FAILED", message: `Browser action failed (${message}).` };
     }
@@ -280,11 +317,12 @@ export class PlaywrightSurface implements SurfaceAdapter {
     return this.#page;
   }
 
-  async #readLabels(page: Page): Promise<Map<string, string>> {
+  async #readLabels(page: Page, deadline: number): Promise<Map<string, string>> {
     const labels = new Map<string, string>();
     const labelLocators = page.locator("label[for]");
     const count = await labelLocators.count();
     for (let index = 0; index < count; index += 1) {
+      this.#applyRemainingTimeout(page, deadline);
       const label = labelLocators.nth(index);
       const targetId = await label.getAttribute("for");
       const text = (await label.innerText()).trim();
@@ -297,7 +335,10 @@ export class PlaywrightSurface implements SurfaceAdapter {
     locator: Locator,
     labelMap: ReadonlyMap<string, string>,
     observationId: string,
+    deadline: number,
   ): Promise<{ element: ObservedElement; entry: ElementRegistryEntry }> {
+    const page = this.#requirePage();
+    this.#applyRemainingTimeout(page, deadline);
     const tagName = await locator.evaluate((element) => element.tagName.toLowerCase());
     const elementType = this.#elementType(tagName);
     const inputType = (await locator.getAttribute("type"))?.toLowerCase();
@@ -320,6 +361,7 @@ export class PlaywrightSurface implements SurfaceAdapter {
       const options = locator.locator("option");
       const selectedValue = await locator.inputValue();
       for (let index = 0; index < (await options.count()); index += 1) {
+        this.#applyRemainingTimeout(page, deadline);
         const option = options.nth(index);
         const value = (await option.getAttribute("value")) ?? "";
         availableOptions.push({
@@ -356,6 +398,33 @@ export class PlaywrightSurface implements SurfaceAdapter {
         ...(href ? { href } : {}),
       },
     };
+  }
+
+  #operationDeadline(options: SurfaceOperationOptions): number {
+    const requested = options.timeoutMs ?? this.#timeoutMs;
+    if (!Number.isFinite(requested) || requested <= 0) throw new SurfaceTimeoutError();
+    return Date.now() + requested;
+  }
+
+  #remainingMs(deadline: number): number {
+    const remaining = Math.floor(deadline - Date.now());
+    if (remaining <= 0) throw new SurfaceTimeoutError();
+    return Math.max(1, remaining);
+  }
+
+  #followupTimeoutMs(options: SurfaceOperationOptions, deadline: number): number {
+    return options.timeoutMs === undefined ? this.#timeoutMs : this.#remainingMs(deadline);
+  }
+
+  #applyRemainingTimeout(page: Page, deadline: number): void {
+    page.setDefaultTimeout(this.#remainingMs(deadline));
+  }
+
+  #isTimeout(error: unknown): boolean {
+    return (
+      error instanceof SurfaceTimeoutError ||
+      (error instanceof Error && error.name === "TimeoutError")
+    );
   }
 
   #elementType(tagName: string): ObservedElement["elementType"] {

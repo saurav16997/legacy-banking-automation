@@ -3,8 +3,8 @@
 The project targets Node.js 20+ with strict TypeScript. Phase 3 confines `@openai/agents` to one
 probabilistic discovery agent. Playwright remains only behind `SurfaceAdapter`; the browser,
 context, page, locators, selectors, and script evaluation are not exposed through the public API.
-Phase 4 adds deterministic artifact compilation. Deterministic replay remains deferred and must
-eventually share this boundary.
+Phase 4 adds deterministic artifact compilation. Phase 5 adds zero-model-call deterministic replay
+through the same bounded surface.
 
 # Artifact schema
 
@@ -25,7 +25,9 @@ irreversible actions fail closed. Missing ownership is `NONE`, missing risk is `
 page hints are ignored unless the host explicitly trusts them. Stable test-ID policy configuration
 can override hints and takes precedence. Discovery completion uses deterministic review-state and
 trajectory checks. Compilation includes only executed browser actions and uses canonical, key-sorted
-JSON, source timestamps only, and conflict-safe versioned writes; replay remains pending.
+JSON, source timestamps only, and conflict-safe versioned writes. Replay validates inputs, resolves
+ordered semantic targets, checks live policy classifications, evaluates business outcomes and final
+conditions, and emits artifact-linked redacted evidence.
 
 # Heterogeneity & multi-tenant
 
@@ -49,6 +51,7 @@ checks. Offline tests inject a scripted runner and make no OpenAI calls.
 
 # Cuts
 
-No deterministic replay engine, final handoff orchestration, automatic HUMAN or irreversible action,
-MCP, multi-agent system, autonomous fallback, queue, cloud infrastructure, or real banking data is
-implemented through Phase 4.
+No final resumable handoff orchestration, automatic HUMAN or irreversible action, MCP, multi-agent
+system, autonomous fallback, queue, cloud infrastructure, or real banking data is implemented
+through Phase 5. Replay can detect a human gate and preserve the supplied live surface, but explicit
+operator resume and same-session continuation remain deferred.

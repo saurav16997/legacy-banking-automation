@@ -23,7 +23,7 @@
         <option value="<%= account.id %>" <%= values.fundingAccountId === account.id ? "selected" : "" %>><%= account.product %> — checking ending <%= account.lastFour %></option>
       <% }) %>
     </select>
-    <div class="form-actions"><a href="/members/<%= member.id %>" data-control-owner="AUTOMATION" data-action-risk="SAFE">Cancel</a><button type="submit" data-control-owner="AUTOMATION" data-action-risk="SAFE">Continue to review</button></div>
+    <div class="form-actions"><a href="/members/<%= member.id %>" data-control-owner="AUTOMATION" data-action-risk="SAFE">Cancel</a><button type="submit" data-control-owner="AUTOMATION" data-action-risk="SAFE">Continue to review</button><% if (ambiguousContinue) { %><button type="submit" data-control-owner="AUTOMATION" data-action-risk="SAFE">Continue to review</button><% } %></div>
   </form>
 </section>
 <%- include("partials/footer") %>

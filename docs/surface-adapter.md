@@ -8,6 +8,11 @@ The browser-control contract consists of `start`, `observe`, `execute`, and `clo
 an agent tool. Discovery and deterministic replay both depend on this boundary and therefore pass
 through the same policy checks, target-resolution rules, timeouts, and redaction behavior.
 
+`start`, `observe`, and `execute` accept optional surface-neutral operation options containing a
+relative `timeoutMs`. The Playwright implementation applies the remaining bound to navigation,
+locator interaction, and observation calls. A timed-out action settles before `execute` returns the
+distinct `TIMED_OUT` status; callers do not race an unbounded browser promise in the background.
+
 The adapter never returns a Playwright `Browser`, `BrowserContext`, `Page`, or `Locator`. It also
 has no public selector, JavaScript evaluation, script, upload, or download operation. Callers can
 issue only `click`, `fill`, `selectOption`, and same-origin `navigate` commands. This prevents a

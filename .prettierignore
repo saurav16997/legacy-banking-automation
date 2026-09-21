@@ -1,0 +1,5 @@
+# Prettier does not provide an EJS parser. Templates are maintained as native EJS/HTML.
+target_app/views/**/*.ejs
+
+# Compiler output is canonical and byte-hashed; general formatting must not rewrite it.
+artifacts/prepare_savings_subaccount/1.0.0/capability.json

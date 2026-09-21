@@ -5,7 +5,8 @@ import type { Store } from "express-session";
 
 import { demoCredentials, FixtureStore, syntheticVerificationCode } from "../fixtures/index.js";
 
-export type TargetScenario = "normal" | "identity_verification_on_review";
+export type TargetScenario =
+  "normal" | "identity_verification_on_review" | "ambiguous_continue_control";
 
 interface SavingsDraft {
   memberId: string;
@@ -126,6 +127,7 @@ export function createPortalRouter(options: PortalRouterOptions): Router {
       member,
       errors: [],
       values: { product: "", nickname: "", initialDeposit: "", fundingAccountId: "" },
+      ambiguousContinue: scenario === "ambiguous_continue_control",
     });
   });
 
@@ -157,7 +159,12 @@ export function createPortalRouter(options: PortalRouterOptions): Router {
     if (!fundingAccount) errors.push("Select an available checking account for funding.");
 
     if (errors.length > 0 || depositCents === undefined || !fundingAccount) {
-      response.status(422).render("savings-new", { member, errors, values });
+      response.status(422).render("savings-new", {
+        member,
+        errors,
+        values,
+        ambiguousContinue: scenario === "ambiguous_continue_control",
+      });
       return;
     }
 
