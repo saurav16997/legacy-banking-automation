@@ -31,8 +31,8 @@ sensitive values never appear in prompts, tool results, errors, summaries, manif
 JSON. Browser screenshots mask all form controls and visible text containing configured evidence
 redaction literals.
 
-This input-reference trajectory is the future compiler's source material. Phase 3 does not compile
-or approve an artifact.
+This input-reference trajectory is the Phase 4 compiler's source material. Discovery itself does not
+compile or approve an artifact.
 
 ## Agent tools
 

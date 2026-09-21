@@ -17,7 +17,8 @@
     "target:start": "tsx target_app/server.ts",
     "discover": "tsx src/cli/index.ts",
     "discover:prepare": "tsx src/cli/index.ts --task=prepare_savings_subaccount",
-    "discover:prepare:headed": "tsx src/cli/index.ts --task=prepare_savings_subaccount --headed"
+    "discover:prepare:headed": "tsx src/cli/index.ts --task=prepare_savings_subaccount --headed",
+    "compile:prepare": "npm run build --silent && node dist/src/cli/compile-prepare.js"
   },
   "dependencies": {
     "@openai/agents": "^0.3.0",

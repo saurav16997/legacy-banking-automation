@@ -3,7 +3,9 @@
 Node.js 20+ and strict TypeScript project for a computer-use system that separates probabilistic
 discovery from deterministic execution. Phase 1 implements the synthetic, server-rendered target
 portal. Phase 2 adds its narrow, policy-controlled browser surface. Phase 3 adds the single-agent
-probabilistic discovery run and deterministic local validation.
+probabilistic discovery run and deterministic local validation. Phase 4 compiles one verified,
+sanitized successful trajectory into a draft, versioned capability artifact without model or network
+access.
 
 ## Boundary
 
@@ -17,10 +19,10 @@ verifies the final review screen. The irreversible `Open Account` action is poli
 not part of the capability. Human handoff is a separate scenario driven by a seeded session-expiry
 or identity-verification interruption.
 
-Phase 3 uses `@openai/agents` only for discovery decisions. Artifact compilation, deterministic
-replay, and final human-handoff orchestration remain unimplemented. The portal's
-identity-verification page is a deterministic target scenario used to test the `HANDOFF_REQUIRED`
-boundary.
+Phase 3 uses `@openai/agents` only for discovery decisions. Phase 4 artifact compilation is entirely
+deterministic. Deterministic replay and final human-handoff orchestration remain unimplemented. The
+portal's identity-verification page is a deterministic target scenario used to test the
+`HANDOFF_REQUIRED` boundary.
 
 ## Phase 2 surface adapter
 
@@ -68,6 +70,26 @@ differences.
 The CLI does not create `.env` or start the portal. It reads runtime variables from the shell and
 can load an existing local `.env` without overriding shell values; it prints only a sanitized run
 summary. A ChatGPT or Codex login is not an OpenAI API credential.
+
+## Phase 4 capability compilation
+
+Compilation verifies the selected discovery directory, manifest entries, file sizes, SHA-256
+digests, successful terminal state, completion checks, input references, exact semantic targets, and
+policy classifications. Only successfully executed browser actions become executable steps;
+observations, rejected attempts, and completion events remain provenance counts.
+
+The canonical contract is
+[`schemas/capability-artifact.v1.schema.json`](schemas/capability-artifact.v1.schema.json). Compile
+a verified local run with:
+
+```powershell
+npm run compile:prepare -- discovery-20260920160150-78f495af
+```
+
+This command makes no model or network request. It writes
+`artifacts/prepare_savings_subaccount/1.0.0/capability.json`. Repeating compilation from identical
+evidence is byte-idempotent; the compiler refuses to overwrite different bytes at the same
+capability version. See [docs/capability-artifact.md](docs/capability-artifact.md).
 
 ## Start the target portal
 

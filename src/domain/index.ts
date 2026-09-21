@@ -86,14 +86,3 @@ export const SurfaceActionResultSchema = z.object({
   observation: SurfaceObservationSchema.optional(),
 });
 export type SurfaceActionResult = z.infer<typeof SurfaceActionResultSchema>;
-
-/** Minimal artifact envelope; the JSON Schema remains authoritative. */
-export const CapabilityArtifactSchema = z.object({
-  schema_version: z.literal("1.0.0"),
-  artifact_id: z.string().min(3),
-  name: z.string(),
-  description: z.string(),
-  version: z.string(),
-  steps: z.array(z.record(z.string(), z.unknown())),
-});
-export type CapabilityArtifact = z.infer<typeof CapabilityArtifactSchema>;

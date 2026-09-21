@@ -1,0 +1,729 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://interface-cua.local/schemas/capability-artifact.v1.schema.json",
+  "title": "Capability Artifact v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "capability",
+    "lifecycle",
+    "compiler",
+    "provenance",
+    "inputs",
+    "outputs",
+    "surface",
+    "preconditions",
+    "steps",
+    "executionPolicy",
+    "checkpoint",
+    "postconditions",
+    "outcomes",
+    "safetyPolicy",
+    "compatibility"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "capability": { "$ref": "#/$defs/capability" },
+    "lifecycle": { "$ref": "#/$defs/lifecycle" },
+    "compiler": { "$ref": "#/$defs/compiler" },
+    "provenance": { "$ref": "#/$defs/provenance" },
+    "inputs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/input" } },
+    "outputs": { "$ref": "#/$defs/outputs" },
+    "surface": { "$ref": "#/$defs/surface" },
+    "preconditions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/condition" }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "executionPolicy": { "$ref": "#/$defs/executionPolicy" },
+    "checkpoint": { "$ref": "#/$defs/checkpoint" },
+    "postconditions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/condition" }
+    },
+    "outcomes": { "$ref": "#/$defs/outcomes" },
+    "safetyPolicy": { "$ref": "#/$defs/safetyPolicy" },
+    "compatibility": { "$ref": "#/$defs/compatibility" }
+  },
+  "$defs": {
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "description", "version"],
+      "properties": {
+        "id": { "const": "prepare_savings_subaccount" },
+        "title": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "pattern": "^[0-9]+[.][0-9]+[.][0-9]+$" }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "approvalRequired"],
+      "properties": {
+        "status": { "const": "DRAFT" },
+        "approvalRequired": { "const": true }
+      }
+    },
+    "compiler": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "const": "deterministic-trajectory-compiler" },
+        "version": { "type": "string", "pattern": "^[0-9]+[.][0-9]+[.][0-9]+$" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "discoveryRunId",
+        "trajectorySchemaVersion",
+        "trajectorySha256",
+        "sourceCompletedAt",
+        "eventCounts",
+        "containsModelTranscript"
+      ],
+      "properties": {
+        "discoveryRunId": {
+          "type": "string",
+          "pattern": "^discovery-[0-9]{14}-[a-f0-9]{8}$"
+        },
+        "trajectorySchemaVersion": { "type": "string", "minLength": 1 },
+        "trajectorySha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "sourceCompletedAt": { "type": "string", "format": "date-time" },
+        "eventCounts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "total",
+            "executedBrowserActions",
+            "rejectedBrowserActions",
+            "observations",
+            "validations"
+          ],
+          "properties": {
+            "total": { "type": "integer", "minimum": 1 },
+            "executedBrowserActions": { "type": "integer", "minimum": 1 },
+            "rejectedBrowserActions": { "type": "integer", "minimum": 0 },
+            "observations": { "type": "integer", "minimum": 1 },
+            "validations": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "containsModelTranscript": { "const": false }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "type",
+        "required",
+        "sensitivity",
+        "description",
+        "format",
+        "pattern",
+        "currency"
+      ],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "type": { "enum": ["STRING", "USD_DECIMAL_STRING"] },
+        "required": { "const": true },
+        "sensitivity": { "$ref": "#/$defs/sensitivity" },
+        "description": { "type": "string", "minLength": 1 },
+        "format": { "type": ["string", "null"] },
+        "pattern": { "type": ["string", "null"] },
+        "currency": { "enum": ["USD", null] }
+      }
+    },
+    "sensitivity": {
+      "enum": ["NONE", "CREDENTIAL", "PII", "FINANCIAL", "SECRET"]
+    },
+    "outputSource": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "pageState"],
+          "properties": {
+            "kind": { "const": "PAGE_STATE" },
+            "pageState": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "checkId"],
+          "properties": {
+            "kind": { "const": "CHECKPOINT_RESULT" },
+            "checkId": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "inputRef"],
+          "properties": {
+            "kind": { "const": "VALIDATED_INPUT" },
+            "inputRef": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "field"],
+          "properties": {
+            "kind": { "const": "OBSERVED_FIELD" },
+            "field": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resultCategories", "success", "businessOutcome", "failure"],
+      "properties": {
+        "resultCategories": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "prefixItems": [
+            { "const": "SUCCESS" },
+            { "const": "BUSINESS_OUTCOME" },
+            { "const": "FAILURE" }
+          ],
+          "items": false
+        },
+        "success": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["category", "status", "accountCreated", "reviewReceipt"],
+          "properties": {
+            "category": { "const": "SUCCESS" },
+            "status": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["value", "source", "sensitivity"],
+              "properties": {
+                "value": { "const": "READY_FOR_REVIEW" },
+                "source": { "$ref": "#/$defs/outputSource" },
+                "sensitivity": { "const": "NONE" }
+              }
+            },
+            "accountCreated": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["value", "source", "sensitivity"],
+              "properties": {
+                "value": { "const": false },
+                "source": { "$ref": "#/$defs/outputSource" },
+                "sensitivity": { "const": "NONE" }
+              }
+            },
+            "reviewReceipt": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["fields"],
+              "properties": {
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["name", "type", "sensitivity", "source"],
+                    "properties": {
+                      "name": { "type": "string", "minLength": 1 },
+                      "type": { "enum": ["STRING", "USD_DECIMAL_STRING"] },
+                      "sensitivity": { "$ref": "#/$defs/sensitivity" },
+                      "source": { "$ref": "#/$defs/outputSource" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "businessOutcome": { "$ref": "#/$defs/categoryDescriptor" },
+        "failure": { "$ref": "#/$defs/categoryDescriptor" }
+      }
+    },
+    "categoryDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "codeType"],
+      "properties": {
+        "category": { "enum": ["BUSINESS_OUTCOME", "FAILURE"] },
+        "codeType": { "const": "ENUM" }
+      }
+    },
+    "surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "entryPoint"],
+      "properties": {
+        "kind": { "const": "LEGACY_WEB" },
+        "entryPoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "expectedInitialPageState"],
+          "properties": {
+            "path": { "const": "/login" },
+            "expectedInitialPageState": { "const": "operator-login" }
+          }
+        }
+      }
+    },
+    "targetStrategy": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "pageState", "controlId", "expectedMatches"],
+          "properties": {
+            "kind": { "const": "TRUSTED_CONTROL_ID" },
+            "pageState": { "type": "string", "minLength": 1 },
+            "controlId": { "type": "string", "minLength": 1 },
+            "expectedMatches": { "const": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "pageState", "label", "exact", "expectedMatches"],
+          "properties": {
+            "kind": { "const": "EXACT_LABEL" },
+            "pageState": { "type": "string", "minLength": 1 },
+            "label": { "type": "string", "minLength": 1 },
+            "exact": { "const": true },
+            "expectedMatches": { "const": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "pageState", "role", "accessibleName", "exact", "expectedMatches"],
+          "properties": {
+            "kind": { "const": "EXACT_ROLE_AND_ACCESSIBLE_NAME" },
+            "pageState": { "type": "string", "minLength": 1 },
+            "role": { "$ref": "#/$defs/semanticRole" },
+            "accessibleName": { "type": "string", "minLength": 1 },
+            "exact": { "const": true },
+            "expectedMatches": { "const": 1 }
+          }
+        }
+      ]
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requiredPageState",
+        "controlKind",
+        "strategies",
+        "expectedOwnership",
+        "expectedRisk",
+        "ambiguityPolicy",
+        "robustness"
+      ],
+      "properties": {
+        "requiredPageState": { "type": "string", "minLength": 1 },
+        "controlKind": { "enum": ["BUTTON", "LINK", "TEXT_FIELD", "SELECT"] },
+        "strategies": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/targetStrategy" }
+        },
+        "expectedOwnership": { "$ref": "#/$defs/owner" },
+        "expectedRisk": { "$ref": "#/$defs/risk" },
+        "ambiguityPolicy": { "const": "FAIL_CLOSED" },
+        "robustness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tier", "signalCodes", "rationaleCode"],
+          "properties": {
+            "tier": { "enum": ["HIGH", "MEDIUM"] },
+            "signalCodes": {
+              "type": "array",
+              "minItems": 2,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "TRUSTED_CONTROL_ID",
+                  "PAGE_STATE",
+                  "LABEL",
+                  "SEMANTIC_ROLE",
+                  "ACCESSIBLE_NAME"
+                ]
+              }
+            },
+            "rationaleCode": { "const": "CURATED_EXACT_SEMANTIC_IDENTITY" }
+          }
+        }
+      }
+    },
+    "condition": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "kind", "pageState"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "kind": { "const": "PAGE_STATE_EQUALS" },
+            "pageState": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "kind", "heading"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "kind": { "const": "HEADING_EQUALS" },
+            "heading": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "kind", "field", "inputRef"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "kind": { "const": "REVIEW_FIELD_MATCHES_INPUT" },
+            "field": { "type": "string", "minLength": 1 },
+            "inputRef": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "kind", "text"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "kind": { "const": "TEXT_CONTAINS" },
+            "text": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "kind", "target"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "kind": { "const": "CONTROL_PRESENT" },
+            "target": { "$ref": "#/$defs/target" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "kind", "role", "accessibleName"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "kind": { "const": "NO_EXECUTED_TARGET" },
+            "role": { "$ref": "#/$defs/semanticRole" },
+            "accessibleName": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "kind", "owners"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "kind": { "const": "NO_EXECUTED_OWNERS" },
+            "owners": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "enum": ["HUMAN", "NONE"] }
+            }
+          }
+        }
+      ]
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sourceEventSequence",
+        "purpose",
+        "operation",
+        "target",
+        "inputRef",
+        "expectedStartingPageState",
+        "expectedResultingPageState",
+        "timeoutMs",
+        "retry",
+        "safety"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^step-[0-9]{2}$" },
+        "sourceEventSequence": { "type": "integer", "minimum": 1 },
+        "purpose": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]+$" },
+        "operation": { "enum": ["CLICK", "FILL", "SELECT_OPTION"] },
+        "target": {
+          "type": "object",
+          "$ref": "#/$defs/target",
+          "properties": {
+            "expectedOwnership": { "const": "AUTOMATION" },
+            "expectedRisk": { "enum": ["SAFE", "SENSITIVE"] }
+          }
+        },
+        "inputRef": { "type": ["string", "null"] },
+        "expectedStartingPageState": { "type": "string", "minLength": 1 },
+        "expectedResultingPageState": { "type": "string", "minLength": 1 },
+        "timeoutMs": { "type": "integer", "minimum": 1 },
+        "retry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["maxAttempts", "backoffMs", "retryOn", "idempotentOnly"],
+          "properties": {
+            "maxAttempts": { "type": "integer", "minimum": 1 },
+            "backoffMs": { "type": "integer", "minimum": 0 },
+            "retryOn": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "enum": ["STALE_TARGET", "TRANSIENT_TIMEOUT"] }
+            },
+            "idempotentOnly": { "const": true }
+          }
+        },
+        "safety": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ownership", "risk", "classification", "policyDecision"],
+          "properties": {
+            "ownership": { "const": "AUTOMATION" },
+            "risk": { "enum": ["SAFE", "SENSITIVE"] },
+            "classification": { "enum": ["READ_ONLY", "REVERSIBLE_INPUT", "SENSITIVE_INPUT"] },
+            "policyDecision": { "const": "ALLOW" }
+          }
+        }
+      }
+    },
+    "executionPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxTotalRuntimeMs", "defaultStepTimeoutMs", "maxStepAttempts"],
+      "properties": {
+        "maxTotalRuntimeMs": { "type": "integer", "minimum": 1 },
+        "defaultStepTimeoutMs": { "type": "integer", "minimum": 1 },
+        "maxStepAttempts": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "mode", "conditions", "successStatus"],
+      "properties": {
+        "id": { "const": "ready-for-review" },
+        "mode": { "const": "ALL" },
+        "conditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/condition" }
+        },
+        "successStatus": { "const": "READY_FOR_REVIEW" }
+      }
+    },
+    "outcomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["businessOutcomes", "recoverableConditions", "failureCodes"],
+      "properties": {
+        "businessOutcomes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "category", "terminal", "detector"],
+            "properties": {
+              "code": { "const": "MEMBER_NOT_FOUND" },
+              "category": { "const": "BUSINESS_OUTCOME" },
+              "terminal": { "const": true },
+              "detector": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["mode", "conditions"],
+                "properties": {
+                  "mode": { "const": "ALL" },
+                  "conditions": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "prefixItems": [
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["kind", "pageState"],
+                        "properties": {
+                          "kind": { "const": "PAGE_STATE_EQUALS" },
+                          "pageState": { "const": "member-search" }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["kind", "template", "bindings"],
+                        "properties": {
+                          "kind": { "const": "TEXT_TEMPLATE_PRESENT" },
+                          "template": { "const": "No member was found for ID {member_id}." },
+                          "bindings": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["member_id"],
+                            "properties": { "member_id": { "const": "member_id" } }
+                          }
+                        }
+                      }
+                    ],
+                    "items": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "recoverableConditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "maxOccurrences", "terminal"],
+            "properties": {
+              "code": { "enum": ["STALE_TARGET", "TRANSIENT_TIMEOUT"] },
+              "maxOccurrences": { "type": "integer", "minimum": 1 },
+              "terminal": { "const": false }
+            }
+          }
+        },
+        "failureCodes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "UNEXPECTED_PAGE_STATE",
+              "TARGET_AMBIGUOUS",
+              "POLICY_VIOLATION",
+              "TIMEOUT",
+              "SESSION_LOSS",
+              "CHECKPOINT_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "safetyPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourcePolicyVersion",
+        "allowedOwners",
+        "forbiddenOwners",
+        "allowedRisks",
+        "forbiddenRisks",
+        "forbiddenTargets",
+        "externalNavigation",
+        "ambiguity"
+      ],
+      "properties": {
+        "sourcePolicyVersion": { "type": "string", "minLength": 1 },
+        "allowedOwners": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "prefixItems": [{ "const": "AUTOMATION" }],
+          "items": false
+        },
+        "forbiddenOwners": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [{ "const": "HUMAN" }, { "const": "NONE" }],
+          "items": false
+        },
+        "allowedRisks": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [{ "const": "SAFE" }, { "const": "SENSITIVE" }],
+          "items": false
+        },
+        "forbiddenRisks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "prefixItems": [{ "const": "IRREVERSIBLE" }],
+          "items": false
+        },
+        "forbiddenTargets": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "prefixItems": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["role", "accessibleName", "exact"],
+              "properties": {
+                "role": { "const": "button" },
+                "accessibleName": { "const": "Open Account" },
+                "exact": { "const": true }
+              }
+            }
+          ],
+          "items": false
+        },
+        "externalNavigation": { "const": "FORBIDDEN" },
+        "ambiguity": { "const": "FAIL_CLOSED" }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "applicationFamily",
+        "tenantScope",
+        "applicationVariants",
+        "semanticSurfaceContract",
+        "adapterKinds"
+      ],
+      "properties": {
+        "applicationFamily": { "type": "string", "minLength": 1 },
+        "tenantScope": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "applicationVariants": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "semanticSurfaceContract": { "const": "1.0.0" },
+        "adapterKinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["LEGACY_WEB", "DESKTOP_ACCESSIBILITY"] }
+        }
+      }
+    },
+    "owner": { "enum": ["AUTOMATION", "HUMAN", "NONE"] },
+    "risk": { "enum": ["SAFE", "SENSITIVE", "IRREVERSIBLE"] },
+    "semanticRole": { "enum": ["button", "link", "textbox", "combobox", "checkbox", "radio"] }
+  }
+}

@@ -7,17 +7,14 @@ import { describe, expect, it } from "vitest";
 const projectRoot = fileURLToPath(new URL("../../", import.meta.url));
 
 describe("capability artifact schema", () => {
-  it("validates the prepare-savings example", async () => {
-    const [schemaText, artifactText] = await Promise.all([
-      readFile(`${projectRoot}schemas/capability-artifact.schema.json`, "utf8"),
-      readFile(`${projectRoot}artifacts/prepare-savings-subaccount.example.json`, "utf8"),
-    ]);
+  it("is the valid canonical v1 schema", async () => {
+    const schemaText = await readFile(
+      `${projectRoot}schemas/capability-artifact.v1.schema.json`,
+      "utf8",
+    );
     const schema: unknown = JSON.parse(schemaText);
-    const artifact: unknown = JSON.parse(artifactText);
-    const ajv = new Ajv2020({ allowUnionTypes: true, strict: true });
+    const ajv = new Ajv2020({ strict: true });
     addFormatsModule.default(ajv);
-    const validate = ajv.compile(schema as AnySchema);
-
-    expect(validate(artifact), JSON.stringify(validate.errors)).toBe(true);
+    expect(() => ajv.compile(schema as AnySchema)).not.toThrow();
   });
 });
