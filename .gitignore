@@ -9,6 +9,9 @@ coverage/
 
 evidence/*
 !evidence/.gitkeep
+!evidence/README.md
+!evidence/examples/
+!evidence/examples/**
 playwright-report/
 test-results/
 

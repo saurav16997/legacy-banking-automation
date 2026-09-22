@@ -1,0 +1,1132 @@
+{
+  "capability": {
+    "description": "Prepare a savings subaccount and stop after deterministic verification of the final review screen.",
+    "id": "prepare_savings_subaccount",
+    "title": "Prepare Savings Subaccount",
+    "version": "1.0.0"
+  },
+  "checkpoint": {
+    "conditions": [
+      {
+        "id": "page-state-ready-for-review",
+        "kind": "PAGE_STATE_EQUALS",
+        "pageState": "ready-for-review"
+      },
+      {
+        "heading": "Review Savings Subaccount",
+        "id": "review-heading",
+        "kind": "HEADING_EQUALS"
+      },
+      {
+        "field": "Member",
+        "id": "review-member",
+        "inputRef": "member_id",
+        "kind": "REVIEW_FIELD_MATCHES_INPUT"
+      },
+      {
+        "field": "Product",
+        "id": "review-product",
+        "inputRef": "product_name",
+        "kind": "REVIEW_FIELD_MATCHES_INPUT"
+      },
+      {
+        "field": "Nickname",
+        "id": "review-nickname",
+        "inputRef": "account_nickname",
+        "kind": "REVIEW_FIELD_MATCHES_INPUT"
+      },
+      {
+        "field": "Initial deposit",
+        "id": "review-deposit",
+        "inputRef": "initial_deposit",
+        "kind": "REVIEW_FIELD_MATCHES_INPUT"
+      },
+      {
+        "field": "Funding account",
+        "id": "review-funding-account",
+        "inputRef": "funding_account",
+        "kind": "REVIEW_FIELD_MATCHES_INPUT"
+      },
+      {
+        "id": "account-not-created",
+        "kind": "TEXT_CONTAINS",
+        "text": "No account has been created."
+      },
+      {
+        "id": "open-account-policy",
+        "kind": "CONTROL_PRESENT",
+        "target": {
+          "ambiguityPolicy": "FAIL_CLOSED",
+          "controlKind": "BUTTON",
+          "expectedOwnership": "NONE",
+          "expectedRisk": "IRREVERSIBLE",
+          "requiredPageState": "ready-for-review",
+          "robustness": {
+            "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+            "signalCodes": [
+              "PAGE_STATE",
+              "SEMANTIC_ROLE",
+              "ACCESSIBLE_NAME"
+            ],
+            "tier": "HIGH"
+          },
+          "strategies": [
+            {
+              "accessibleName": "Open Account",
+              "exact": true,
+              "expectedMatches": 1,
+              "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+              "pageState": "ready-for-review",
+              "role": "button"
+            }
+          ]
+        }
+      },
+      {
+        "accessibleName": "Open Account",
+        "id": "open-account-not-executed",
+        "kind": "NO_EXECUTED_TARGET",
+        "role": "button"
+      },
+      {
+        "id": "forbidden-owner-not-executed",
+        "kind": "NO_EXECUTED_OWNERS",
+        "owners": [
+          "HUMAN",
+          "NONE"
+        ]
+      }
+    ],
+    "id": "ready-for-review",
+    "mode": "ALL",
+    "successStatus": "READY_FOR_REVIEW"
+  },
+  "compatibility": {
+    "adapterKinds": [
+      "LEGACY_WEB",
+      "DESKTOP_ACCESSIBILITY"
+    ],
+    "applicationFamily": "heritage-community-credit-union-member-portal",
+    "applicationVariants": [
+      "server-rendered-legacy-v1"
+    ],
+    "semanticSurfaceContract": "1.0.0",
+    "tenantScope": [
+      "synthetic-training"
+    ]
+  },
+  "compiler": {
+    "id": "deterministic-trajectory-compiler",
+    "version": "1.0.0"
+  },
+  "executionPolicy": {
+    "defaultStepTimeoutMs": 10000,
+    "maxStepAttempts": 2,
+    "maxTotalRuntimeMs": 180000
+  },
+  "inputs": [
+    {
+      "currency": null,
+      "description": "Operator identity used to enter the synthetic servicing portal.",
+      "format": "USERNAME",
+      "name": "operator_username",
+      "pattern": null,
+      "required": true,
+      "sensitivity": "NONE",
+      "type": "STRING"
+    },
+    {
+      "currency": null,
+      "description": "Portal credential resolved only at invocation time.",
+      "format": "PASSWORD",
+      "name": "portal_password",
+      "pattern": null,
+      "required": true,
+      "sensitivity": "CREDENTIAL",
+      "type": "STRING"
+    },
+    {
+      "currency": null,
+      "description": "Member identifier used for the deterministic member lookup.",
+      "format": "MEMBER_ID",
+      "name": "member_id",
+      "pattern": "^M-[0-9]{5}$",
+      "required": true,
+      "sensitivity": "PII",
+      "type": "STRING"
+    },
+    {
+      "currency": null,
+      "description": "Savings product display name selected for preparation.",
+      "format": "PRODUCT_NAME",
+      "name": "product_name",
+      "pattern": null,
+      "required": true,
+      "sensitivity": "NONE",
+      "type": "STRING"
+    },
+    {
+      "currency": null,
+      "description": "Invocation-supplied nickname for the prepared subaccount.",
+      "format": "ACCOUNT_NICKNAME",
+      "name": "account_nickname",
+      "pattern": null,
+      "required": true,
+      "sensitivity": "NONE",
+      "type": "STRING"
+    },
+    {
+      "currency": "USD",
+      "description": "Initial deposit represented as a two-decimal USD string.",
+      "format": "MONEY",
+      "name": "initial_deposit",
+      "pattern": "^(0|[1-9][0-9]*)[.][0-9]{2}$",
+      "required": true,
+      "sensitivity": "FINANCIAL",
+      "type": "USD_DECIMAL_STRING"
+    },
+    {
+      "currency": null,
+      "description": "Funding-account display reference selected at invocation time.",
+      "format": "ACCOUNT_DISPLAY_REFERENCE",
+      "name": "funding_account",
+      "pattern": null,
+      "required": true,
+      "sensitivity": "FINANCIAL",
+      "type": "STRING"
+    }
+  ],
+  "lifecycle": {
+    "approvalRequired": true,
+    "status": "DRAFT"
+  },
+  "outcomes": {
+    "businessOutcomes": [
+      {
+        "category": "BUSINESS_OUTCOME",
+        "code": "MEMBER_NOT_FOUND",
+        "detector": {
+          "conditions": [
+            {
+              "kind": "PAGE_STATE_EQUALS",
+              "pageState": "member-search"
+            },
+            {
+              "bindings": {
+                "member_id": "member_id"
+              },
+              "kind": "TEXT_TEMPLATE_PRESENT",
+              "template": "No member was found for ID {member_id}."
+            }
+          ],
+          "mode": "ALL"
+        },
+        "terminal": true
+      }
+    ],
+    "failureCodes": [
+      "UNEXPECTED_PAGE_STATE",
+      "TARGET_AMBIGUOUS",
+      "POLICY_VIOLATION",
+      "TIMEOUT",
+      "SESSION_LOSS",
+      "CHECKPOINT_FAILED"
+    ],
+    "recoverableConditions": [
+      {
+        "code": "STALE_TARGET",
+        "maxOccurrences": 1,
+        "terminal": false
+      },
+      {
+        "code": "TRANSIENT_TIMEOUT",
+        "maxOccurrences": 1,
+        "terminal": false
+      }
+    ]
+  },
+  "outputs": {
+    "businessOutcome": {
+      "category": "BUSINESS_OUTCOME",
+      "codeType": "ENUM"
+    },
+    "failure": {
+      "category": "FAILURE",
+      "codeType": "ENUM"
+    },
+    "resultCategories": [
+      "SUCCESS",
+      "BUSINESS_OUTCOME",
+      "FAILURE"
+    ],
+    "success": {
+      "accountCreated": {
+        "sensitivity": "NONE",
+        "source": {
+          "checkId": "account-not-created",
+          "kind": "CHECKPOINT_RESULT"
+        },
+        "value": false
+      },
+      "category": "SUCCESS",
+      "reviewReceipt": {
+        "fields": [
+          {
+            "name": "member",
+            "sensitivity": "PII",
+            "source": {
+              "inputRef": "member_id",
+              "kind": "VALIDATED_INPUT"
+            },
+            "type": "STRING"
+          },
+          {
+            "name": "product",
+            "sensitivity": "NONE",
+            "source": {
+              "inputRef": "product_name",
+              "kind": "VALIDATED_INPUT"
+            },
+            "type": "STRING"
+          },
+          {
+            "name": "nickname",
+            "sensitivity": "NONE",
+            "source": {
+              "inputRef": "account_nickname",
+              "kind": "VALIDATED_INPUT"
+            },
+            "type": "STRING"
+          },
+          {
+            "name": "deposit",
+            "sensitivity": "FINANCIAL",
+            "source": {
+              "inputRef": "initial_deposit",
+              "kind": "VALIDATED_INPUT"
+            },
+            "type": "USD_DECIMAL_STRING"
+          },
+          {
+            "name": "fundingAccount",
+            "sensitivity": "FINANCIAL",
+            "source": {
+              "inputRef": "funding_account",
+              "kind": "VALIDATED_INPUT"
+            },
+            "type": "STRING"
+          }
+        ]
+      },
+      "status": {
+        "sensitivity": "NONE",
+        "source": {
+          "kind": "PAGE_STATE",
+          "pageState": "ready-for-review"
+        },
+        "value": "READY_FOR_REVIEW"
+      }
+    }
+  },
+  "postconditions": [
+    {
+      "id": "page-state-ready-for-review",
+      "kind": "PAGE_STATE_EQUALS",
+      "pageState": "ready-for-review"
+    },
+    {
+      "heading": "Review Savings Subaccount",
+      "id": "review-heading",
+      "kind": "HEADING_EQUALS"
+    },
+    {
+      "field": "Member",
+      "id": "review-member",
+      "inputRef": "member_id",
+      "kind": "REVIEW_FIELD_MATCHES_INPUT"
+    },
+    {
+      "field": "Product",
+      "id": "review-product",
+      "inputRef": "product_name",
+      "kind": "REVIEW_FIELD_MATCHES_INPUT"
+    },
+    {
+      "field": "Nickname",
+      "id": "review-nickname",
+      "inputRef": "account_nickname",
+      "kind": "REVIEW_FIELD_MATCHES_INPUT"
+    },
+    {
+      "field": "Initial deposit",
+      "id": "review-deposit",
+      "inputRef": "initial_deposit",
+      "kind": "REVIEW_FIELD_MATCHES_INPUT"
+    },
+    {
+      "field": "Funding account",
+      "id": "review-funding-account",
+      "inputRef": "funding_account",
+      "kind": "REVIEW_FIELD_MATCHES_INPUT"
+    },
+    {
+      "id": "account-not-created",
+      "kind": "TEXT_CONTAINS",
+      "text": "No account has been created."
+    },
+    {
+      "id": "open-account-policy",
+      "kind": "CONTROL_PRESENT",
+      "target": {
+        "ambiguityPolicy": "FAIL_CLOSED",
+        "controlKind": "BUTTON",
+        "expectedOwnership": "NONE",
+        "expectedRisk": "IRREVERSIBLE",
+        "requiredPageState": "ready-for-review",
+        "robustness": {
+          "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+          "signalCodes": [
+            "PAGE_STATE",
+            "SEMANTIC_ROLE",
+            "ACCESSIBLE_NAME"
+          ],
+          "tier": "HIGH"
+        },
+        "strategies": [
+          {
+            "accessibleName": "Open Account",
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+            "pageState": "ready-for-review",
+            "role": "button"
+          }
+        ]
+      }
+    },
+    {
+      "accessibleName": "Open Account",
+      "id": "open-account-not-executed",
+      "kind": "NO_EXECUTED_TARGET",
+      "role": "button"
+    },
+    {
+      "id": "forbidden-owner-not-executed",
+      "kind": "NO_EXECUTED_OWNERS",
+      "owners": [
+        "HUMAN",
+        "NONE"
+      ]
+    }
+  ],
+  "preconditions": [
+    {
+      "id": "initial-page-state",
+      "kind": "PAGE_STATE_EQUALS",
+      "pageState": "operator-login"
+    }
+  ],
+  "provenance": {
+    "containsModelTranscript": false,
+    "discoveryRunId": "discovery-20260920160150-78f495af",
+    "eventCounts": {
+      "executedBrowserActions": 12,
+      "observations": 1,
+      "rejectedBrowserActions": 1,
+      "total": 15,
+      "validations": 1
+    },
+    "sourceCompletedAt": "2026-09-20T16:02:27.935Z",
+    "trajectorySchemaVersion": "1.0.0",
+    "trajectorySha256": "dcede9b4a78be9efb4229b224f9b3c5c74502c0150f374fb411a353ff33877cc"
+  },
+  "safetyPolicy": {
+    "allowedOwners": [
+      "AUTOMATION"
+    ],
+    "allowedRisks": [
+      "SAFE",
+      "SENSITIVE"
+    ],
+    "ambiguity": "FAIL_CLOSED",
+    "externalNavigation": "FORBIDDEN",
+    "forbiddenOwners": [
+      "HUMAN",
+      "NONE"
+    ],
+    "forbiddenRisks": [
+      "IRREVERSIBLE"
+    ],
+    "forbiddenTargets": [
+      {
+        "accessibleName": "Open Account",
+        "exact": true,
+        "role": "button"
+      }
+    ],
+    "sourcePolicyVersion": "surface-policy/1.0.0"
+  },
+  "schemaVersion": "1.0.0",
+  "steps": [
+    {
+      "expectedResultingPageState": "operator-login",
+      "expectedStartingPageState": "operator-login",
+      "id": "step-01",
+      "inputRef": "operator_username",
+      "operation": "FILL",
+      "purpose": "ENTER_OPERATOR_USERNAME",
+      "retry": {
+        "backoffMs": 250,
+        "idempotentOnly": true,
+        "maxAttempts": 2,
+        "retryOn": [
+          "STALE_TARGET",
+          "TRANSIENT_TIMEOUT"
+        ]
+      },
+      "safety": {
+        "classification": "REVERSIBLE_INPUT",
+        "ownership": "AUTOMATION",
+        "policyDecision": "ALLOW",
+        "risk": "SAFE"
+      },
+      "sourceEventSequence": 2,
+      "target": {
+        "ambiguityPolicy": "FAIL_CLOSED",
+        "controlKind": "TEXT_FIELD",
+        "expectedOwnership": "AUTOMATION",
+        "expectedRisk": "SAFE",
+        "requiredPageState": "operator-login",
+        "robustness": {
+          "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+          "signalCodes": [
+            "PAGE_STATE",
+            "LABEL",
+            "SEMANTIC_ROLE",
+            "ACCESSIBLE_NAME"
+          ],
+          "tier": "HIGH"
+        },
+        "strategies": [
+          {
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_LABEL",
+            "label": "Operator username",
+            "pageState": "operator-login"
+          },
+          {
+            "accessibleName": "Operator username",
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+            "pageState": "operator-login",
+            "role": "textbox"
+          }
+        ]
+      },
+      "timeoutMs": 10000
+    },
+    {
+      "expectedResultingPageState": "operator-login",
+      "expectedStartingPageState": "operator-login",
+      "id": "step-02",
+      "inputRef": "portal_password",
+      "operation": "FILL",
+      "purpose": "ENTER_PORTAL_PASSWORD",
+      "retry": {
+        "backoffMs": 250,
+        "idempotentOnly": true,
+        "maxAttempts": 2,
+        "retryOn": [
+          "STALE_TARGET",
+          "TRANSIENT_TIMEOUT"
+        ]
+      },
+      "safety": {
+        "classification": "SENSITIVE_INPUT",
+        "ownership": "AUTOMATION",
+        "policyDecision": "ALLOW",
+        "risk": "SENSITIVE"
+      },
+      "sourceEventSequence": 4,
+      "target": {
+        "ambiguityPolicy": "FAIL_CLOSED",
+        "controlKind": "TEXT_FIELD",
+        "expectedOwnership": "AUTOMATION",
+        "expectedRisk": "SENSITIVE",
+        "requiredPageState": "operator-login",
+        "robustness": {
+          "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+          "signalCodes": [
+            "PAGE_STATE",
+            "LABEL",
+            "SEMANTIC_ROLE",
+            "ACCESSIBLE_NAME"
+          ],
+          "tier": "HIGH"
+        },
+        "strategies": [
+          {
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_LABEL",
+            "label": "Password",
+            "pageState": "operator-login"
+          },
+          {
+            "accessibleName": "Password",
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+            "pageState": "operator-login",
+            "role": "textbox"
+          }
+        ]
+      },
+      "timeoutMs": 10000
+    },
+    {
+      "expectedResultingPageState": "employee-dashboard",
+      "expectedStartingPageState": "operator-login",
+      "id": "step-03",
+      "inputRef": null,
+      "operation": "CLICK",
+      "purpose": "SUBMIT_OPERATOR_LOGIN",
+      "retry": {
+        "backoffMs": 0,
+        "idempotentOnly": true,
+        "maxAttempts": 1,
+        "retryOn": []
+      },
+      "safety": {
+        "classification": "READ_ONLY",
+        "ownership": "AUTOMATION",
+        "policyDecision": "ALLOW",
+        "risk": "SAFE"
+      },
+      "sourceEventSequence": 5,
+      "target": {
+        "ambiguityPolicy": "FAIL_CLOSED",
+        "controlKind": "BUTTON",
+        "expectedOwnership": "AUTOMATION",
+        "expectedRisk": "SAFE",
+        "requiredPageState": "operator-login",
+        "robustness": {
+          "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+          "signalCodes": [
+            "PAGE_STATE",
+            "SEMANTIC_ROLE",
+            "ACCESSIBLE_NAME"
+          ],
+          "tier": "MEDIUM"
+        },
+        "strategies": [
+          {
+            "accessibleName": "Log in",
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+            "pageState": "operator-login",
+            "role": "button"
+          }
+        ]
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "expectedResultingPageState": "member-search",
+      "expectedStartingPageState": "employee-dashboard",
+      "id": "step-04",
+      "inputRef": null,
+      "operation": "CLICK",
+      "purpose": "OPEN_MEMBER_SEARCH",
+      "retry": {
+        "backoffMs": 0,
+        "idempotentOnly": true,
+        "maxAttempts": 1,
+        "retryOn": []
+      },
+      "safety": {
+        "classification": "READ_ONLY",
+        "ownership": "AUTOMATION",
+        "policyDecision": "ALLOW",
+        "risk": "SAFE"
+      },
+      "sourceEventSequence": 6,
+      "target": {
+        "ambiguityPolicy": "FAIL_CLOSED",
+        "controlKind": "LINK",
+        "expectedOwnership": "AUTOMATION",
+        "expectedRisk": "SAFE",
+        "requiredPageState": "employee-dashboard",
+        "robustness": {
+          "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+          "signalCodes": [
+            "PAGE_STATE",
+            "SEMANTIC_ROLE",
+            "ACCESSIBLE_NAME"
+          ],
+          "tier": "MEDIUM"
+        },
+        "strategies": [
+          {
+            "accessibleName": "Member Search\nLocate a member and view account services.",
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+            "pageState": "employee-dashboard",
+            "role": "link"
+          }
+        ]
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "expectedResultingPageState": "member-search",
+      "expectedStartingPageState": "member-search",
+      "id": "step-05",
+      "inputRef": "member_id",
+      "operation": "FILL",
+      "purpose": "ENTER_MEMBER_ID",
+      "retry": {
+        "backoffMs": 250,
+        "idempotentOnly": true,
+        "maxAttempts": 2,
+        "retryOn": [
+          "STALE_TARGET",
+          "TRANSIENT_TIMEOUT"
+        ]
+      },
+      "safety": {
+        "classification": "SENSITIVE_INPUT",
+        "ownership": "AUTOMATION",
+        "policyDecision": "ALLOW",
+        "risk": "SENSITIVE"
+      },
+      "sourceEventSequence": 7,
+      "target": {
+        "ambiguityPolicy": "FAIL_CLOSED",
+        "controlKind": "TEXT_FIELD",
+        "expectedOwnership": "AUTOMATION",
+        "expectedRisk": "SENSITIVE",
+        "requiredPageState": "member-search",
+        "robustness": {
+          "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+          "signalCodes": [
+            "PAGE_STATE",
+            "LABEL",
+            "SEMANTIC_ROLE",
+            "ACCESSIBLE_NAME"
+          ],
+          "tier": "HIGH"
+        },
+        "strategies": [
+          {
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_LABEL",
+            "label": "Member ID",
+            "pageState": "member-search"
+          },
+          {
+            "accessibleName": "Member ID",
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+            "pageState": "member-search",
+            "role": "textbox"
+          }
+        ]
+      },
+      "timeoutMs": 10000
+    },
+    {
+      "expectedResultingPageState": "member-profile",
+      "expectedStartingPageState": "member-search",
+      "id": "step-06",
+      "inputRef": null,
+      "operation": "CLICK",
+      "purpose": "SUBMIT_MEMBER_SEARCH",
+      "retry": {
+        "backoffMs": 0,
+        "idempotentOnly": true,
+        "maxAttempts": 1,
+        "retryOn": []
+      },
+      "safety": {
+        "classification": "READ_ONLY",
+        "ownership": "AUTOMATION",
+        "policyDecision": "ALLOW",
+        "risk": "SAFE"
+      },
+      "sourceEventSequence": 8,
+      "target": {
+        "ambiguityPolicy": "FAIL_CLOSED",
+        "controlKind": "BUTTON",
+        "expectedOwnership": "AUTOMATION",
+        "expectedRisk": "SAFE",
+        "requiredPageState": "member-search",
+        "robustness": {
+          "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+          "signalCodes": [
+            "PAGE_STATE",
+            "SEMANTIC_ROLE",
+            "ACCESSIBLE_NAME"
+          ],
+          "tier": "MEDIUM"
+        },
+        "strategies": [
+          {
+            "accessibleName": "Search",
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+            "pageState": "member-search",
+            "role": "button"
+          }
+        ]
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "expectedResultingPageState": "savings-application",
+      "expectedStartingPageState": "member-profile",
+      "id": "step-07",
+      "inputRef": null,
+      "operation": "CLICK",
+      "purpose": "OPEN_SAVINGS_APPLICATION",
+      "retry": {
+        "backoffMs": 0,
+        "idempotentOnly": true,
+        "maxAttempts": 1,
+        "retryOn": []
+      },
+      "safety": {
+        "classification": "READ_ONLY",
+        "ownership": "AUTOMATION",
+        "policyDecision": "ALLOW",
+        "risk": "SAFE"
+      },
+      "sourceEventSequence": 9,
+      "target": {
+        "ambiguityPolicy": "FAIL_CLOSED",
+        "controlKind": "LINK",
+        "expectedOwnership": "AUTOMATION",
+        "expectedRisk": "SAFE",
+        "requiredPageState": "member-profile",
+        "robustness": {
+          "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+          "signalCodes": [
+            "PAGE_STATE",
+            "SEMANTIC_ROLE",
+            "ACCESSIBLE_NAME"
+          ],
+          "tier": "MEDIUM"
+        },
+        "strategies": [
+          {
+            "accessibleName": "Add savings subaccount",
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+            "pageState": "member-profile",
+            "role": "link"
+          }
+        ]
+      },
+      "timeoutMs": 15000
+    },
+    {
+      "expectedResultingPageState": "savings-application",
+      "expectedStartingPageState": "savings-application",
+      "id": "step-08",
+      "inputRef": "product_name",
+      "operation": "SELECT_OPTION",
+      "purpose": "SELECT_SAVINGS_PRODUCT",
+      "retry": {
+        "backoffMs": 250,
+        "idempotentOnly": true,
+        "maxAttempts": 2,
+        "retryOn": [
+          "STALE_TARGET",
+          "TRANSIENT_TIMEOUT"
+        ]
+      },
+      "safety": {
+        "classification": "REVERSIBLE_INPUT",
+        "ownership": "AUTOMATION",
+        "policyDecision": "ALLOW",
+        "risk": "SAFE"
+      },
+      "sourceEventSequence": 10,
+      "target": {
+        "ambiguityPolicy": "FAIL_CLOSED",
+        "controlKind": "SELECT",
+        "expectedOwnership": "AUTOMATION",
+        "expectedRisk": "SAFE",
+        "requiredPageState": "savings-application",
+        "robustness": {
+          "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+          "signalCodes": [
+            "PAGE_STATE",
+            "LABEL",
+            "SEMANTIC_ROLE",
+            "ACCESSIBLE_NAME"
+          ],
+          "tier": "HIGH"
+        },
+        "strategies": [
+          {
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_LABEL",
+            "label": "Product",
+            "pageState": "savings-application"
+          },
+          {
+            "accessibleName": "Product",
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+            "pageState": "savings-application",
+            "role": "combobox"
+          }
+        ]
+      },
+      "timeoutMs": 10000
+    },
+    {
+      "expectedResultingPageState": "savings-application",
+      "expectedStartingPageState": "savings-application",
+      "id": "step-09",
+      "inputRef": "account_nickname",
+      "operation": "FILL",
+      "purpose": "ENTER_ACCOUNT_NICKNAME",
+      "retry": {
+        "backoffMs": 250,
+        "idempotentOnly": true,
+        "maxAttempts": 2,
+        "retryOn": [
+          "STALE_TARGET",
+          "TRANSIENT_TIMEOUT"
+        ]
+      },
+      "safety": {
+        "classification": "REVERSIBLE_INPUT",
+        "ownership": "AUTOMATION",
+        "policyDecision": "ALLOW",
+        "risk": "SAFE"
+      },
+      "sourceEventSequence": 11,
+      "target": {
+        "ambiguityPolicy": "FAIL_CLOSED",
+        "controlKind": "TEXT_FIELD",
+        "expectedOwnership": "AUTOMATION",
+        "expectedRisk": "SAFE",
+        "requiredPageState": "savings-application",
+        "robustness": {
+          "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+          "signalCodes": [
+            "PAGE_STATE",
+            "LABEL",
+            "SEMANTIC_ROLE",
+            "ACCESSIBLE_NAME"
+          ],
+          "tier": "HIGH"
+        },
+        "strategies": [
+          {
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_LABEL",
+            "label": "Account nickname",
+            "pageState": "savings-application"
+          },
+          {
+            "accessibleName": "Account nickname",
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+            "pageState": "savings-application",
+            "role": "textbox"
+          }
+        ]
+      },
+      "timeoutMs": 10000
+    },
+    {
+      "expectedResultingPageState": "savings-application",
+      "expectedStartingPageState": "savings-application",
+      "id": "step-10",
+      "inputRef": "initial_deposit",
+      "operation": "FILL",
+      "purpose": "ENTER_INITIAL_DEPOSIT",
+      "retry": {
+        "backoffMs": 250,
+        "idempotentOnly": true,
+        "maxAttempts": 2,
+        "retryOn": [
+          "STALE_TARGET",
+          "TRANSIENT_TIMEOUT"
+        ]
+      },
+      "safety": {
+        "classification": "SENSITIVE_INPUT",
+        "ownership": "AUTOMATION",
+        "policyDecision": "ALLOW",
+        "risk": "SENSITIVE"
+      },
+      "sourceEventSequence": 12,
+      "target": {
+        "ambiguityPolicy": "FAIL_CLOSED",
+        "controlKind": "TEXT_FIELD",
+        "expectedOwnership": "AUTOMATION",
+        "expectedRisk": "SENSITIVE",
+        "requiredPageState": "savings-application",
+        "robustness": {
+          "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+          "signalCodes": [
+            "PAGE_STATE",
+            "LABEL",
+            "SEMANTIC_ROLE",
+            "ACCESSIBLE_NAME"
+          ],
+          "tier": "HIGH"
+        },
+        "strategies": [
+          {
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_LABEL",
+            "label": "Initial deposit",
+            "pageState": "savings-application"
+          },
+          {
+            "accessibleName": "Initial deposit",
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+            "pageState": "savings-application",
+            "role": "textbox"
+          }
+        ]
+      },
+      "timeoutMs": 10000
+    },
+    {
+      "expectedResultingPageState": "savings-application",
+      "expectedStartingPageState": "savings-application",
+      "id": "step-11",
+      "inputRef": "funding_account",
+      "operation": "SELECT_OPTION",
+      "purpose": "SELECT_FUNDING_ACCOUNT",
+      "retry": {
+        "backoffMs": 250,
+        "idempotentOnly": true,
+        "maxAttempts": 2,
+        "retryOn": [
+          "STALE_TARGET",
+          "TRANSIENT_TIMEOUT"
+        ]
+      },
+      "safety": {
+        "classification": "SENSITIVE_INPUT",
+        "ownership": "AUTOMATION",
+        "policyDecision": "ALLOW",
+        "risk": "SENSITIVE"
+      },
+      "sourceEventSequence": 13,
+      "target": {
+        "ambiguityPolicy": "FAIL_CLOSED",
+        "controlKind": "SELECT",
+        "expectedOwnership": "AUTOMATION",
+        "expectedRisk": "SENSITIVE",
+        "requiredPageState": "savings-application",
+        "robustness": {
+          "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+          "signalCodes": [
+            "PAGE_STATE",
+            "LABEL",
+            "SEMANTIC_ROLE",
+            "ACCESSIBLE_NAME"
+          ],
+          "tier": "HIGH"
+        },
+        "strategies": [
+          {
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_LABEL",
+            "label": "Funding account",
+            "pageState": "savings-application"
+          },
+          {
+            "accessibleName": "Funding account",
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+            "pageState": "savings-application",
+            "role": "combobox"
+          }
+        ]
+      },
+      "timeoutMs": 10000
+    },
+    {
+      "expectedResultingPageState": "ready-for-review",
+      "expectedStartingPageState": "savings-application",
+      "id": "step-12",
+      "inputRef": null,
+      "operation": "CLICK",
+      "purpose": "CONTINUE_TO_REVIEW",
+      "retry": {
+        "backoffMs": 0,
+        "idempotentOnly": true,
+        "maxAttempts": 1,
+        "retryOn": []
+      },
+      "safety": {
+        "classification": "READ_ONLY",
+        "ownership": "AUTOMATION",
+        "policyDecision": "ALLOW",
+        "risk": "SAFE"
+      },
+      "sourceEventSequence": 14,
+      "target": {
+        "ambiguityPolicy": "FAIL_CLOSED",
+        "controlKind": "BUTTON",
+        "expectedOwnership": "AUTOMATION",
+        "expectedRisk": "SAFE",
+        "requiredPageState": "savings-application",
+        "robustness": {
+          "rationaleCode": "CURATED_EXACT_SEMANTIC_IDENTITY",
+          "signalCodes": [
+            "PAGE_STATE",
+            "SEMANTIC_ROLE",
+            "ACCESSIBLE_NAME"
+          ],
+          "tier": "MEDIUM"
+        },
+        "strategies": [
+          {
+            "accessibleName": "Continue to review",
+            "exact": true,
+            "expectedMatches": 1,
+            "kind": "EXACT_ROLE_AND_ACCESSIBLE_NAME",
+            "pageState": "savings-application",
+            "role": "button"
+          }
+        ]
+      },
+      "timeoutMs": 15000
+    }
+  ],
+  "surface": {
+    "entryPoint": {
+      "expectedInitialPageState": "operator-login",
+      "path": "/login"
+    },
+    "kind": "LEGACY_WEB"
+  }
+}

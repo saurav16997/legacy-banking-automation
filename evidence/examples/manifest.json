@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "1.0.0",
+  "artifact": {
+    "id": "prepare_savings_subaccount",
+    "version": "1.0.0",
+    "sha256": "6b69efff71733dd1da104a822cb2da75a0372d9e55582aa0a372233cedf61c83"
+  },
+  "sources": {
+    "artifact": {
+      "kind": "artifact",
+      "path": "artifacts/prepare_savings_subaccount/1.0.0/capability.json"
+    },
+    "discovery": {
+      "kind": "discovery",
+      "runId": "discovery-20260920160150-78f495af"
+    },
+    "replaySuccess": {
+      "kind": "replay",
+      "runId": "replay-20260921220210-b1f338da"
+    },
+    "replayHandoff": {
+      "kind": "replay",
+      "runId": "replay-20260922011845-72a62c36"
+    },
+    "replayBusinessOutcome": {
+      "kind": "replay",
+      "runId": "replay-20260922151121-e3c32385"
+    }
+  },
+  "files": [
+    {
+      "path": "capability.json",
+      "bytes": 30796,
+      "sha256": "6b69efff71733dd1da104a822cb2da75a0372d9e55582aa0a372233cedf61c83",
+      "source": "artifact"
+    },
+    {
+      "path": "discovery/ready-for-review.png",
+      "bytes": 38813,
+      "sha256": "ebf01fd38493e15eac7f16e3950633d07cc4f3956886426ffb736a2c37c24511",
+      "source": "discovery"
+    },
+    {
+      "path": "discovery/summary.json",
+      "bytes": 135,
+      "sha256": "1fae3437027db8694f3fbf1d5291f088f25c6bd97f03ab40a500d103b5983e4e",
+      "source": "discovery"
+    },
+    {
+      "path": "discovery/trajectory.json",
+      "bytes": 77680,
+      "sha256": "dcede9b4a78be9efb4229b224f9b3c5c74502c0150f374fb411a353ff33877cc",
+      "source": "discovery"
+    },
+    {
+      "path": "replay-business-outcome/context.json",
+      "bytes": 259,
+      "sha256": "6d82bea46735c010c25d9fd21e825a754089324cd6cba8f2d1995388ded6eeb7",
+      "source": "replayBusinessOutcome"
+    },
+    {
+      "path": "replay-business-outcome/events.jsonl",
+      "bytes": 3740,
+      "sha256": "fa7a66f819d796589e2783ade7fd0ff0a617ccc19bbf9bac6dfa4f80f97e7876",
+      "source": "replayBusinessOutcome"
+    },
+    {
+      "path": "replay-business-outcome/summary.json",
+      "bytes": 353,
+      "sha256": "f46cc6277fe665505ef47a9f504a35426925ee30aa5c4cb02635eaed153768da",
+      "source": "replayBusinessOutcome"
+    },
+    {
+      "path": "replay-handoff/context.json",
+      "bytes": 259,
+      "sha256": "c07bf6b078cd6d935e351611317bf5ef6691a3c1a6dad422d9c07a8cba283fc2",
+      "source": "replayHandoff"
+    },
+    {
+      "path": "replay-handoff/events.jsonl",
+      "bytes": 9427,
+      "sha256": "13918e4a29ac407e178885acb8697228f6cefbe6d43be8262e36be4ae5363474",
+      "source": "replayHandoff"
+    },
+    {
+      "path": "replay-handoff/handoff.json",
+      "bytes": 877,
+      "sha256": "04d47c602fc6f17e9a0fed68a7f090be6b45a8d09cbe8a5ec673d055ffd92abf",
+      "source": "replayHandoff"
+    },
+    {
+      "path": "replay-handoff/screenshots/paused.png",
+      "bytes": 34355,
+      "sha256": "172f6ae0f70e6e0b10db1049eff59cacf8be4dc35a809c135bd46ad33fc51c35",
+      "source": "replayHandoff"
+    },
+    {
+      "path": "replay-handoff/summary.json",
+      "bytes": 344,
+      "sha256": "76a1df51ab83ea4138d2d65cd0c4aaa0f4e071bc8a1c7662c2a68bbca532163a",
+      "source": "replayHandoff"
+    },
+    {
+      "path": "replay-success/context.json",
+      "bytes": 259,
+      "sha256": "d2c2e0b531e1423ad573f092c6ab0d2912d16f64e0e75d120cc8ff2e182e344a",
+      "source": "replaySuccess"
+    },
+    {
+      "path": "replay-success/events.jsonl",
+      "bytes": 7398,
+      "sha256": "c3702751c21bd2e7d7565a933611a905e10ba844565f32211c367bd6056d37d2",
+      "source": "replaySuccess"
+    },
+    {
+      "path": "replay-success/summary.json",
+      "bytes": 344,
+      "sha256": "988ddc8b53a1dd95dbd2e99ebfd4b8ee9358e871721f075b86ad49e111550c84",
+      "source": "replaySuccess"
+    }
+  ]
+}

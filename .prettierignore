@@ -3,3 +3,6 @@ target_app/views/**/*.ejs
 
 # Compiler output is canonical and byte-hashed; general formatting must not rewrite it.
 artifacts/prepare_savings_subaccount/1.0.0/capability.json
+
+# Curated evidence files are exact, hash-manifested copies of authoritative runtime evidence.
+evidence/examples/**
