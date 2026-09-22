@@ -43,6 +43,12 @@ async function listFiles(directory: string, prefix = ""): Promise<string[]> {
 }
 
 describe("curated submission evidence", () => {
+  it("pins text checkouts to LF and treats PNG evidence as binary", async () => {
+    const attributes = await readFile(path.resolve(".gitattributes"), "utf8");
+
+    expect(attributes).toBe("* text=auto eol=lf\n\n*.png binary\n");
+  });
+
   it("keeps the curated capability byte-identical to the canonical artifact", async () => {
     const canonical = await readFile(
       path.resolve("artifacts/prepare_savings_subaccount/1.0.0/capability.json"),
