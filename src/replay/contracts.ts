@@ -1,5 +1,6 @@
 import type { SurfaceAdapter } from "../browser/index.js";
 import type { CapabilityArtifact, TargetStrategy } from "../compiler/contracts.js";
+import type { HandoffResumeRequest, HandoffValidationCode } from "../handoff/index.js";
 
 export type ReplayInputs = Readonly<Record<string, string>>;
 
@@ -13,7 +14,13 @@ export interface ReplayEngineOptions {
   readonly evidence?: ReplayEvidenceSink;
   readonly now?: () => number;
   readonly createRunId?: () => string;
+  readonly handoffTtlMs?: number;
+  readonly createResumeToken?: () => string;
+  readonly createHandoffId?: () => string;
 }
+
+export type ReplaySessionState =
+  "CREATED" | "RUNNING" | "PAUSED_FOR_HUMAN" | "COMPLETED" | "FAILED" | "CLOSED";
 
 export interface ReplayEvidenceContext {
   readonly runId: string;
@@ -34,7 +41,13 @@ export interface ReplayEvidenceEvent {
     | "STEP_TIMED_OUT"
     | "RECOVERY_APPLIED"
     | "BUSINESS_OUTCOME"
-    | "INTERVENTION_REQUIRED"
+    | "HANDOFF_REQUIRED"
+    | "RESUME_REQUESTED"
+    | "HANDOFF_NOT_COMPLETED"
+    | "HANDOFF_COMPLETED"
+    | "HANDOFF_EXPIRED"
+    | "HANDOFF_ABANDONED"
+    | "REPLAY_RESUMED"
     | "CHECKPOINT_VALIDATED"
     | "RUN_FAILED"
     | "RUN_SUCCEEDED";
@@ -49,6 +62,31 @@ export interface ReplayEvidenceEvent {
   readonly message?: string;
   readonly timeoutScope?: "ATTEMPT" | "GLOBAL";
   readonly effectiveTimeoutMs?: number;
+  readonly handoffId?: string;
+  readonly ownership?: "HUMAN";
+  readonly completedStepIds?: readonly string[];
+  readonly checkpointSha256?: string;
+  readonly expectedPageState?: string;
+  readonly expiresAt?: string;
+  readonly evidenceRef?: string;
+}
+
+export interface ReplayHandoffEvidenceRecord {
+  readonly handoffId: string;
+  readonly runId: string;
+  readonly artifactId: string;
+  readonly artifactVersion: string;
+  readonly artifactSha256: string;
+  readonly sessionBindingSha256: string;
+  readonly checkpointSha256: string;
+  readonly completedStepIds: readonly string[];
+  readonly nextStepIndex: number;
+  readonly expectedHumanPageState: string;
+  readonly expectedPostHumanPageState: string;
+  readonly ownership: "HUMAN";
+  readonly createdAt: string;
+  readonly expiresAt: string;
+  readonly screenshotRef?: string;
 }
 
 export interface ReplayEvidenceSummary {
@@ -67,6 +105,7 @@ export interface ReplayEvidenceSink {
   initialize(context: ReplayEvidenceContext): Promise<void>;
   append(event: ReplayEvidenceEvent): Promise<void>;
   writeScreenshot(name: string, bytes: Uint8Array): Promise<string>;
+  writeInterimHandoff(record: ReplayHandoffEvidenceRecord): Promise<string>;
   finalize(summary: ReplayEvidenceSummary): Promise<void>;
 }
 
@@ -94,8 +133,37 @@ export interface ReplayBusinessOutcomeResult extends ReplayResultBase {
 
 export interface ReplayInterventionRequiredResult extends ReplayResultBase {
   readonly status: "intervention_required";
+  readonly code: "INTERVENTION_REQUIRED";
   readonly interventionId: string;
   readonly stepId: string;
+  readonly reason: string;
+  readonly handoff: {
+    readonly handoffId: string;
+    readonly resumeToken: string;
+    readonly runId: string;
+    readonly artifactId: string;
+    readonly artifactVersion: string;
+    readonly artifactSha256: string;
+    readonly checkpointSha256: string;
+    readonly completedStepIds: readonly string[];
+    readonly expectedHumanPageState: string;
+    readonly expectedPostHumanPageState: string;
+    readonly expiresAt: string;
+  };
+}
+
+export interface ReplayHandoffNotCompletedResult extends ReplayResultBase {
+  readonly status: "handoff_not_completed";
+  readonly code: "HANDOFF_NOT_COMPLETED";
+  readonly handoffId: string;
+  readonly stepId: string;
+  readonly reason: string;
+  readonly expiresAt: string;
+}
+
+export interface ReplayResumeRejectedResult extends ReplayResultBase {
+  readonly status: "resume_rejected";
+  readonly code: HandoffValidationCode | "SESSION_NOT_PAUSED";
   readonly reason: string;
 }
 
@@ -113,7 +181,10 @@ export type ReplayFailureCode =
   | "TRANSIENT_TIMEOUT"
   | "GLOBAL_TIMEOUT"
   | "SESSION_LOSS"
-  | "CHECKPOINT_FAILED";
+  | "CHECKPOINT_FAILED"
+  | "HANDOFF_EXPIRED"
+  | "HANDOFF_ABANDONED"
+  | "UNEXPECTED_POST_HANDOFF_STATE";
 
 export interface ReplayFailureResult extends ReplayResultBase {
   readonly status: "failure";
@@ -134,7 +205,13 @@ export type ReplayResult =
   | ReplaySuccessResult
   | ReplayBusinessOutcomeResult
   | ReplayInterventionRequiredResult
+  | ReplayHandoffNotCompletedResult
+  | ReplayResumeRejectedResult
   | ReplayFailureResult;
+
+export type ReplayAbandonReason = "EOF" | "SIGNAL" | "EXPIRED" | "OPERATOR" | "CALLER_CLOSED";
+
+export type { HandoffResumeRequest };
 
 export interface ReplayExecutionContext {
   readonly artifact: CapabilityArtifact;

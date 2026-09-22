@@ -39,6 +39,10 @@ class MemoryEvidenceSink implements ReplayEvidenceSink {
     return Promise.resolve(`memory://${name}`);
   }
 
+  writeInterimHandoff(): Promise<string> {
+    return Promise.resolve("memory://handoff.json");
+  }
+
   finalize(_summary: ReplayEvidenceSummary): Promise<void> {
     return Promise.resolve();
   }

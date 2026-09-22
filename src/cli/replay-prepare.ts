@@ -107,8 +107,9 @@ export async function runReplayPrepareCli(
     trustControlMetadata: true,
   });
   const evidence = new FileReplayEvidenceSink(path.join(cwd, "evidence", "replay"));
+  const engine = new ReplayEngine({ surface, evidence });
   try {
-    const result = await new ReplayEngine({ surface, evidence }).replay(artifact, {
+    const result = await engine.replay(artifact, {
       inputs: readReplayInputs(environment),
       allowDraftArtifact: cli.allowDraft,
     });
@@ -129,7 +130,7 @@ export async function runReplayPrepareCli(
     process.stdout.write(`${JSON.stringify(summary)}\n`);
     return result.status === "failure" ? 1 : 0;
   } finally {
-    await surface.close();
+    await engine.close();
   }
 }
 

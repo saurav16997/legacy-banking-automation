@@ -26,7 +26,9 @@ export class FakeSurfaceAdapter implements SurfaceAdapter {
   readonly observeOptions: SurfaceOperationOptions[] = [];
   readonly executeOptions: SurfaceOperationOptions[] = [];
   readonly screenshotRedactions: string[][] = [];
+  readonly sessionId = crypto.randomUUID();
   closed = false;
+  started = false;
   executeHandler: (
     command: SurfaceCommand,
     options?: SurfaceOperationOptions,
@@ -42,6 +44,7 @@ export class FakeSurfaceAdapter implements SurfaceAdapter {
   }
 
   start(options: SurfaceOperationOptions = {}): Promise<SurfaceObservation> {
+    this.started = true;
     this.startOptions.push(options);
     return Promise.resolve(this.observation);
   }
@@ -65,6 +68,10 @@ export class FakeSurfaceAdapter implements SurfaceAdapter {
   captureScreenshot(redactions: readonly string[] = []): Promise<Uint8Array> {
     this.screenshotRedactions.push([...redactions]);
     return Promise.resolve(new TextEncoder().encode("synthetic-png"));
+  }
+
+  surfaceSessionId(): string | undefined {
+    return this.started && !this.closed ? this.sessionId : undefined;
   }
 
   close(): Promise<void> {

@@ -4,9 +4,11 @@
 
 Playwright is the first implementation detail behind `SurfaceAdapter`; it is not the architecture.
 The browser-control contract consists of `start`, `observe`, `execute`, and `close`. A safe
-`captureScreenshot` evidence hook is available only to deterministic host code and is not exposed as
-an agent tool. Discovery and deterministic replay both depend on this boundary and therefore pass
-through the same policy checks, target-resolution rules, timeouts, and redaction behavior.
+`captureScreenshot` evidence hook and an opaque `surfaceSessionId` are available only to
+deterministic host code and are not exposed as agent tools. The ID identifies the live adapter
+session for handoff binding; it grants no browser access. Discovery and deterministic replay both
+depend on this boundary and therefore pass through the same policy checks, target-resolution rules,
+timeouts, and redaction behavior.
 
 `start`, `observe`, and `execute` accept optional surface-neutral operation options containing a
 relative `timeoutMs`. The Playwright implementation applies the remaining bound to navigation,
@@ -73,8 +75,8 @@ The adapter itself deliberately does not implement:
 - artifact compilation or approval;
 - deterministic artifact replay and postcondition evaluation;
 - frame-tree normalization;
-- final human-handoff coordination, operator resume signals, or handoff auditing; or
+- human interaction, operator-input collection, or handoff evidence persistence; or
 - outcome classification.
 
-Those components may consume this adapter later, but they may not receive its private Playwright
-objects or add a parallel browser-control path.
+The Phase 6 replay coordinator consumes only the opaque surface-session ID and the existing bounded
+operations. It does not receive private Playwright objects or add a parallel browser-control path.

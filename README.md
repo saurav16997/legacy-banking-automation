@@ -5,7 +5,8 @@ discovery from deterministic execution. Phase 1 implements the synthetic, server
 portal. Phase 2 adds its narrow, policy-controlled browser surface. Phase 3 adds the single-agent
 probabilistic discovery run and deterministic local validation. Phase 4 compiles one verified,
 sanitized successful trajectory into a draft, versioned capability artifact without model or network
-access. Phase 5 deterministically replays that artifact through the same bounded surface.
+access. Phase 5 deterministically replays that artifact through the same bounded surface. Phase 6
+adds resumable, same-session human handoff for the seeded identity-verification interruption.
 
 ## Boundary
 
@@ -19,10 +20,10 @@ verifies the final review screen. The irreversible `Open Account` action is poli
 not part of the capability. Human handoff is a separate scenario driven by a seeded session-expiry
 or identity-verification interruption.
 
-Phase 3 uses `@openai/agents` only for discovery decisions. Artifact compilation and replay are
-entirely deterministic and make zero model calls. Final resumable human-handoff orchestration
-remains unimplemented. The portal's identity-verification page is a deterministic target scenario
-used to test the `intervention_required` boundary.
+Phase 3 uses `@openai/agents` only for discovery decisions. Artifact compilation, replay, and human
+control transfer are entirely deterministic and make zero model calls. The portal's
+identity-verification page is the bounded HUMAN-owned interruption used for same-session pause and
+resume.
 
 ## Phase 2 surface adapter
 
@@ -111,6 +112,21 @@ The default replay uses the distinct synthetic member `M-20017`, nickname `Emerg
 `125.00`, and that member's checking account. See
 [docs/deterministic-replay.md](docs/deterministic-replay.md) for input overrides, evidence, and
 failure behavior.
+
+## Phase 6 resumable human handoff
+
+`ReplayEngine` now owns an explicit `CREATED`, `RUNNING`, `PAUSED_FOR_HUMAN`, `COMPLETED`, `FAILED`,
+and `CLOSED` lifecycle. At identity verification it checkpoints all executed artifact steps, retains
+the same opaque surface session, writes sanitized interim evidence, and returns a typed handoff with
+a short-lived in-memory resume token. Human wait time is excluded from the automation budget and is
+bounded by a separate ten-minute TTL.
+
+Resume validates the run, artifact hash, replay/surface sessions, checkpoint, token, and TTL before
+a fresh observation. A still-present gate returns `HANDOFF_NOT_COMPLETED` without automation; the
+expected review state continues after the checkpoint without repeating completed actions. The raw
+token and verification code are never logged or written to evidence. Resumability requires the
+original Node.js process and headed browser to remain alive. See
+[docs/resumable-human-handoff.md](docs/resumable-human-handoff.md).
 
 ## Start the target portal
 

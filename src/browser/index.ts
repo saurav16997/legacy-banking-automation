@@ -22,6 +22,7 @@ export interface SurfaceAdapter {
   observe(options?: SurfaceOperationOptions): Promise<SurfaceObservation>;
   execute(command: SurfaceCommand, options?: SurfaceOperationOptions): Promise<SurfaceActionResult>;
   captureScreenshot(redactions?: readonly string[]): Promise<Uint8Array>;
+  surfaceSessionId(): string | undefined;
   close(): Promise<void>;
 }
 
@@ -78,6 +79,7 @@ export class PlaywrightSurface implements SurfaceAdapter {
   #context: BrowserContext | undefined;
   #page: Page | undefined;
   #lastObservation: SurfaceObservation | undefined;
+  #surfaceSessionId: string | undefined;
   #registry = new Map<string, ElementRegistryEntry>();
   #referenceOrigins = new Map<string, string>();
   #nextElementNumber = 1;
@@ -104,6 +106,7 @@ export class PlaywrightSurface implements SurfaceAdapter {
     try {
       this.#browser = await chromium.launch({ headless: this.#headless });
       this.#context = await this.#browser.newContext({ acceptDownloads: false });
+      this.#surfaceSessionId = randomUUID();
       this.#page = await this.#context.newPage();
       this.#page.setDefaultTimeout(this.#timeoutMs);
       const deadline = this.#operationDeadline(options);
@@ -308,8 +311,13 @@ export class PlaywrightSurface implements SurfaceAdapter {
     this.#page = undefined;
     this.#context = undefined;
     this.#browser = undefined;
+    this.#surfaceSessionId = undefined;
     if (context) await context.close().catch(() => undefined);
     if (browser) await browser.close().catch(() => undefined);
+  }
+
+  surfaceSessionId(): string | undefined {
+    return this.#surfaceSessionId;
   }
 
   #requirePage(): Page {

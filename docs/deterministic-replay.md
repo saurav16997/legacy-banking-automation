@@ -38,15 +38,19 @@ an agent/model call.
 
 After every action, replay checks the resulting page state before continuing. A missing-member page
 returns the terminal `MEMBER_NOT_FOUND` business outcome. A human-owned identity verification page
-returns `intervention_required` while the engine leaves the supplied surface open; resumable human
-handoff coordination remains a separate phase.
+returns `intervention_required` while the engine leaves the supplied surface open. Phase 6 binds a
+short-lived in-memory resume token to the run, artifact hash, replay and surface sessions, completed
+step checkpoint, and expected page-state transition. Human wait time is excluded from the remaining
+automation budget. See [resumable-human-handoff.md](resumable-human-handoff.md).
 
 ## Evidence
 
-`FileReplayEvidenceSink` writes `context.json`, `events.jsonl`, an optional masked failure
-screenshot, and `summary.json` beneath `evidence/replay/<run-id>/`. The context links the run to the
-artifact version and canonical SHA-256 digest. Events contain input references, page states, status
-codes, and sanitized surface fingerprints, but no input values or visible page text.
+`FileReplayEvidenceSink` writes `context.json`, `events.jsonl`, optional masked screenshots, and
+`summary.json` beneath `evidence/replay/<run-id>/`. A paused handoff also writes one sanitized
+`handoff.json`; `summary.json` remains absent until the replay reaches one terminal outcome. The
+context links the run to the artifact version and canonical SHA-256 digest. Events contain input
+references, page states, status codes, and sanitized surface fingerprints, but no input values,
+resume tokens, verification codes, or visible page text.
 
 ## Local CLI
 

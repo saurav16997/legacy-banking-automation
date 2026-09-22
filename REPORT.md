@@ -4,7 +4,8 @@ The project targets Node.js 20+ with strict TypeScript. Phase 3 confines `@opena
 probabilistic discovery agent. Playwright remains only behind `SurfaceAdapter`; the browser,
 context, page, locators, selectors, and script evaluation are not exposed through the public API.
 Phase 4 adds deterministic artifact compilation. Phase 5 adds zero-model-call deterministic replay
-through the same bounded surface.
+through the same bounded surface. Phase 6 adds deterministic, resumable human handoff while keeping
+the original replay process and bounded surface alive.
 
 # Artifact schema
 
@@ -27,7 +28,10 @@ can override hints and takes precedence. Discovery completion uses deterministic
 trajectory checks. Compilation includes only executed browser actions and uses canonical, key-sorted
 JSON, source timestamps only, and conflict-safe versioned writes. Replay validates inputs, resolves
 ordered semantic targets, checks live policy classifications, evaluates business outcomes and final
-conditions, and emits artifact-linked redacted evidence.
+conditions, and emits artifact-linked redacted evidence. Human pauses checkpoint completed steps and
+the remaining automation budget. Resume revalidates a short-lived token bound to the run, artifact,
+replay session, surface session, checkpoint, and page-state transition before making one fresh
+observation.
 
 # Heterogeneity & multi-tenant
 
@@ -39,7 +43,10 @@ local synthetic Express portal. Multi-tenant runtime behavior is deliberately de
 The irreversible `Open Account` action is observed as `NONE` + `IRREVERSIBLE`, is policy-blocked,
 and does not mutate the target when attempted through the adapter. Identity-verification controls
 are human-owned: automation receives `HANDOFF_REQUIRED` without interacting, while the same browser
-session remains open. Final handoff coordination and explicit operator resume are deferred.
+session remains open. The replay engine records a sanitized checkpoint and pauses. The employee uses
+the headed browser directly, then acknowledges completion with an empty terminal line. Replay
+validates the same-session handoff and either remains paused, resumes after the checkpoint, or fails
+closed. No HUMAN-owned browser action is automated.
 
 # Safety
 
@@ -51,7 +58,7 @@ checks. Offline tests inject a scripted runner and make no OpenAI calls.
 
 # Cuts
 
-No final resumable handoff orchestration, automatic HUMAN or irreversible action, MCP, multi-agent
-system, autonomous fallback, queue, cloud infrastructure, or real banking data is implemented
-through Phase 5. Replay can detect a human gate and preserve the supplied live surface, but explicit
-operator resume and same-session continuation remain deferred.
+No automatic HUMAN or irreversible action, cross-process handoff recovery, MCP, multi-agent system,
+autonomous fallback, queue, cloud infrastructure, or real banking data is implemented through
+Phase 6. Handoff is intentionally limited to one live in-process replay and its existing headed
+browser.

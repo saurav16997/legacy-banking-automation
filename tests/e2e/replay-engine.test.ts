@@ -162,7 +162,7 @@ describe("deterministic capability replay", () => {
   });
 
   it("pauses at a human-owned interruption without replacing the live surface", async () => {
-    const { replay } = engine(serverUrl(interruptedServer), "00000004");
+    const { replay, evidence } = engine(serverUrl(interruptedServer), "00000004");
     const result = await replay.replay(artifact, {
       inputs: successfulInputs,
       allowDraftArtifact: true,
@@ -171,10 +171,27 @@ describe("deterministic capability replay", () => {
     expect(result).toMatchObject({
       status: "intervention_required",
       stepId: "step-12",
+      handoff: {
+        completedStepIds: artifact.steps.map((step) => step.id),
+        expectedHumanPageState: "human-verification-required",
+        expectedPostHumanPageState: "ready-for-review",
+      },
     });
+    expect(replay.state).toBe("PAUSED_FOR_HUMAN");
+    if (result.status !== "intervention_required") throw new Error("Expected handoff");
     const liveSurface = surfaces.at(-1);
+    const sessionId = liveSurface?.surfaceSessionId();
     await expect(liveSurface?.observe()).resolves.toMatchObject({
       pageState: "human-verification-required",
     });
+    expect(liveSurface?.surfaceSessionId()).toBe(sessionId);
+    const directory = evidence.directory;
+    expect(directory).toBeDefined();
+    const events = await readFile(path.join(directory ?? "", "events.jsonl"), "utf8");
+    const handoff = await readFile(path.join(directory ?? "", "handoff.json"), "utf8");
+    expect(events).toContain('"type":"HANDOFF_REQUIRED"');
+    expect(events).not.toContain(result.handoff.resumeToken);
+    expect(handoff).not.toContain(result.handoff.resumeToken);
+    await expect(readFile(path.join(directory ?? "", "summary.json"), "utf8")).rejects.toThrow();
   });
 });
