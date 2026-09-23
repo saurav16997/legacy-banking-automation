@@ -1,6 +1,6 @@
 # Resumable human handoff
 
-Phase 6 adds one in-process, same-surface human pause to deterministic replay. It does not add a
+This design adds one in-process, same-surface human pause to deterministic replay. It does not add a
 human-action API, browser selectors, direct Playwright access, discovery fallback, or a model call.
 The supported interruption is the synthetic identity-verification gate reached after the final
 artifact action.
@@ -98,8 +98,7 @@ content. Handoff and failure screenshots use the existing form-control and invoc
 In one PowerShell terminal, start the seeded portal:
 
 ```powershell
-$env:TARGET_SCENARIO="identity_verification_on_review"
-npm run target:start
+npm run target:start:handoff
 ```
 
 In another terminal, provide the existing local target URL and synthetic portal credential through
@@ -110,6 +109,10 @@ npm run replay:prepare:handoff
 ```
 
 The task-specific command builds and starts headed deterministic replay with the explicit local
-DRAFT override. Complete verification in Chromium, press Enter on an empty terminal line, and expect
-`success` / `READY_FOR_REVIEW`. Do not select **Open Account**. The command never accepts or prints
-the verification code.
+DRAFT override. In Chromium, enter the synthetic fixture code `739241`, click **Verify and
+continue**, and wait for **Review Savings Subaccount** before pressing Enter on an empty terminal
+line. A wrong code shows an error and leaves the HUMAN gate active so it can be corrected in the
+same browser session. Pressing Enter early produces `HANDOFF_NOT_COMPLETED`, performs no HUMAN
+action, and returns to the bounded wait loop. Expect `success` / `READY_FOR_REVIEW` after the review
+page is visible. Do not select **Open Account**. The replay command never accepts or prints the
+verification code; a real code would reach the employee through an out-of-band channel.

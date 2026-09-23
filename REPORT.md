@@ -1,113 +1,155 @@
-# Architecture
+# Design report
 
-The system separates probabilistic learning from deterministic execution. A single OpenAI Agents SDK
-agent performs goal-driven discovery through six closed tools. It sees semantic observations, input
-references, and sanitized results—not resolved values, selectors, Playwright objects, or arbitrary
-browser code. Deterministic application code owns policy, completion validation, recording,
-compilation, replay, outcomes, evidence, and human control.
+## Architecture
 
-Node.js and strict TypeScript keep the local Express portal, Playwright adapter, schemas, CLIs, and
-tests in one typed runtime. That reduces serialization mismatches at the trust boundaries and makes
-the demonstration straightforward to run on Windows. Express/EJS deliberately represents a
-server-rendered legacy application rather than a modern API-first target.
+The submitted reference capability is `prepare_savings_subaccount`. Its task identifier maps to a
+specific natural-language goal: prepare a savings-subaccount request and stop at the verified review
+screen. This is a deliberately scoped implementation of the discovery-to-replay pattern, not an
+arbitrary universal task runner.
 
-`SurfaceAdapter` is the stable browser port. Its first implementation uses headed or headless
-Playwright Chromium, but consumers depend only on bounded `start`, `observe`, `execute`, screenshot,
-session-identity, and `close` operations. Semantic roles, accessible names, labels, trusted IDs, and
-expected page states were chosen instead of CSS/XPath because they express operator-visible intent,
-survive incidental layout changes, and can be checked for exactly one match. Ephemeral observation
-and element references prevent stale or fabricated browser handles.
+```mermaid
+flowchart LR
+    Goal["Natural-language goal"] --> Discovery["LLM discovery<br/>bounded tools"]
+    Discovery --> Trajectory["Sanitized trajectory"]
+    Trajectory --> Compiler["Offline compiler<br/>no model"]
+    Compiler --> Artifact["Typed artifact"]
+    Artifact --> Replay["Deterministic replay<br/>no model"]
+    Replay --> Surface["SurfaceAdapter"]
+    Surface --> Portal["Legacy portal"]
+    Replay --> Handoff["Human handoff<br/>no model"]
+```
 
-# Artifact schema
+The model boundary is narrow. One OpenAI Agents SDK agent participates only in discovery, where it
+receives sanitized semantic observations and chooses among six closed tools. Deterministic code owns
+input resolution, policy, recording, completion validation, compilation, replay, outcomes, evidence,
+and handoff. The successful trajectory becomes compiler input; the compiler verifies it and emits a
+canonical artifact; replay later interprets that artifact without a model or discovery fallback.
 
-The canonical v1 JSON schema defines capability identity and lifecycle, typed input references,
-ordered steps, target strategies, timeouts and recovery, checkpoint/postconditions, typed outcomes,
-safety policy, provenance, and compatibility. The checked-in `prepare_savings_subaccount` v1.0.0
-artifact is a DRAFT with 12 safe actions and SHA-256
-`6b69efff71733dd1da104a822cb2da75a0372d9e55582aa0a372233cedf61c83`.
+Playwright is private behind `SurfaceAdapter`. Discovery and replay can observe semantic state or
+request bounded click, fill, selection, and same-origin navigation operations, but cannot access a
+browser, page, locator, selector, or script primitive. This keeps browser authority in application
+code and gives another surface implementation a stable contract to satisfy.
 
-Compilation accepts only a verified successful discovery directory. It validates the source
-manifest, path containment, byte sizes, hashes, event vocabulary, input contract, action count,
-semantic recipes, ownership/risk, and deterministic completion checks. It excludes observations,
-stale attempts, model metadata, literal values, and the completion declaration from executable
-steps. Canonical JSON sorting and newline rules make identical inputs byte-identical; an existing
-version with different bytes fails instead of being overwritten.
+## Artifact schema
 
-# Determinism & error handling
+The v1 schema makes the capability reviewable before execution. It contains identity and semantic
+version, DRAFT lifecycle state, typed inputs and outputs, preconditions, twelve ordered steps,
+ordered semantic target strategies, expected page states, per-step timeouts, bounded recovery rules,
+declared business outcomes, a success checkpoint, postconditions, ownership/risk requirements,
+provenance, and adapter compatibility.
 
-Replay validates the artifact and every declared invocation input before opening a browser. For each
-step it freshly observes the expected page, evaluates ordered semantic strategies, requires one
-match, rechecks live ownership/risk, executes through `SurfaceAdapter`, and verifies the result
-page. It makes zero model calls and has no discovery fallback.
+The artifact excludes the raw model transcript, CSS/XPath selectors, observation IDs, ephemeral
+element references, Playwright handles, credentials, and resolved invocation values. Those details
+either create unnecessary disclosure or are valid only inside one observation. Targets instead use
+operator-visible semantics such as role, accessible name, label, trusted control ID, and page state,
+with an exact-match count and fail-closed ambiguity policy.
 
-Failures remain typed and distinct: invalid artifact/input, policy rejection, target missing or
-ambiguous, stale observation, transient step timeout, exhausted global deadline, unexpected state,
-handoff failure, and internal error. `MEMBER_NOT_FOUND` is a terminal business outcome, not a
-generic failure. One live zero-model Phase 7 run exercised it and stopped after six safe artifact
-actions.
+Compilation accepts a verified successful discovery directory, validates its manifest and event
+contract, projects only executed safe actions, and serializes canonical JSON. Existing versions
+cannot be overwritten with different bytes. Compiler output is `DRAFT` with
+`approvalRequired: true`; default replay rejects it. The demo's explicit `--allow-draft` flag is a
+local acceptance aid, not approval and not a lifecycle mutation.
 
-Retry is deliberately narrow. Only declared idempotent FILL and SELECT_OPTION operations may retry
-for their named stale/timeout recovery, within attempt and total-runtime bounds. Clicks, policy
-rejections, HUMAN/NONE ownership, irreversible operations, and ambiguous targets never retry.
-Timeouts propagate to the real Playwright operation and settle before control returns, preventing a
-late browser mutation after a terminal result.
+## Determinism & error handling
 
-# Heterogeneity & multi-tenant
+Replay validates the artifact and all declared inputs before browser execution. Each step takes a
+fresh observation, checks the required page state, resolves its semantic target to exactly one live
+control, rechecks ownership and risk, executes through `SurfaceAdapter`, and validates the resulting
+state. Deterministic replay makes zero model calls and never falls back to discovery.
 
-The architecture supports another UI through a new `SurfaceAdapter`, not by exposing raw browser
-automation to discovery or replay. Artifact compatibility fields and surface versions make drift
-explicit; exact semantic matching fails closed when a page changes. A new workflow adds a curated
-definition, schema-compatible artifact, deterministic completion/outcome rules, and tests rather
-than a new agent framework. A desktop adapter would preserve the same semantic target, ownership,
-and policy contract while replacing the web accessibility/interaction implementation; legacy UIs
-without useful accessibility metadata would require a deliberately bounded adapter-specific
-normalization layer.
+Results preserve four useful categories. A successful outcome means the final checkpoint proved
+`READY_FOR_REVIEW` and `account_created: false`. A declared business outcome such as
+`MEMBER_NOT_FOUND` is terminal and expected rather than an automation crash. Recoverable conditions
+are limited to named stale-observation or transient-timeout cases on artifact-declared idempotent
+fills and selections. Hard failures cover invalid artifacts or inputs, policy rejection, missing or
+ambiguous targets, session loss, incompatible state, exhausted deadlines, and failed checkpoints.
 
-This submission intentionally runs one local synthetic tenant. A production extension would bind a
-tenant ID, target origin, adapter configuration, artifact approval, input source, and evidence sink
-into one immutable execution context. Artifacts and resume tokens would be tenant-scoped, and no
-ambient credential or cross-tenant artifact lookup would be allowed. Reuse would start from a base
-artifact and apply explicit, schema-validated tenant, vendor, and UI-version override layers before
-approval; silent runtime overrides would be forbidden. Those controls are extension requirements,
-not claims about the single-tenant demo.
+The artifact supplies an aggregate runtime deadline and per-step deadlines. The effective bound is
+the earlier of the two and reaches the actual Playwright operation. Retry counts are finite, and
+clicks, policy failures, HUMAN/NONE controls, irreversible actions, and ambiguity never retry. This
+prevents a timed-out operation from mutating the portal after replay has reported a terminal result.
 
-# Escalation & handoff
+## Heterogeneity & multi-tenant
 
-A HUMAN-owned identity-verification page causes `PAUSED_FOR_HUMAN`, never an automated action. The
-coordinator creates a 256-bit in-memory token and stores only its SHA-256 digest. It binds the token
-to run, artifact, replay/surface sessions, completed-step checkpoint, expected transition, and TTL.
-The browser remains open while the employee acts directly.
+The implemented surface is a local server-rendered web portal observed through Chromium's DOM and
+accessibility semantics. `SurfaceAdapter` is the extension seam for desktop accessibility APIs or a
+legacy UI normalization layer: the implementation may change, but observation identity, semantic
+targets, ownership, risk, session identity, timeouts, and bounded actions must retain the same
+contract. Raw desktop or browser automation would still remain outside model reach.
 
-Resume accepts the token once, requires the same process and live sessions, and performs a fresh
-observation. It cannot reuse pre-handoff element references or repeat completed actions. If the gate
-remains, the token stays usable until expiry; an unexpected state, changed binding, expiry,
-abandonment, or consumed token fails closed. The authoritative live run paused after all 12 artifact
-steps, resumed with zero repeated actions, and finished `READY_FOR_REVIEW` in the original evidence
-directory.
+Compatibility fields identify application family, variant, semantic surface version, adapter kind,
+and tenant scope. A production design could start from a reviewed base artifact and apply explicit,
+schema-validated tenant, vendor, or UI-version overrides before approval. Runtime drift should cause
+an exact semantic or page-state mismatch and fail closed, prompting review or rediscovery rather
+than a silent selector patch.
 
-# Safety
+This repository demonstrates one synthetic tenant and one web adapter. It does not prove real
+cross-tenant deployment, canonicalization across vendors, or desktop support; those are designed
+extension points that need separate evidence.
 
-Policy treats missing metadata as `NONE` plus `IRREVERSIBLE`. Only `AUTOMATION` controls with safe
-or explicitly permitted sensitive risk can execute. External navigation, HUMAN/NONE ownership,
-irreversible risk, and **Open Account** are blocked before interaction. The success contract proves
-the review page and `accountCreated: false`; it never equates navigation with completion.
+## Escalation & handoff
 
-Sensitive values stay in an in-memory input vault or replay invocation. Evidence records references,
-page states, fingerprints, policy decisions, hashes, and typed outcomes. It excludes resolved
-inputs, credentials, API keys, authorization headers, raw tokens, verification values, HTML/DOM,
-selectors, Playwright handles, and provider messages. Screenshots mask form controls and
-invocation-dependent display values. Runtime evidence remains ignored; the committed examples are
-hash-manifested, audited copies with an automated drift/redaction test.
+```mermaid
+stateDiagram-v2
+    [*] --> CREATED
+    CREATED --> RUNNING
+    RUNNING --> PAUSED_FOR_HUMAN
+    PAUSED_FOR_HUMAN --> RUNNING
+    RUNNING --> COMPLETED
+    RUNNING --> FAILED
+    PAUSED_FOR_HUMAN --> FAILED
+    COMPLETED --> CLOSED
+    FAILED --> CLOSED
+```
 
-# Cuts
+A HUMAN-owned identity page pauses the existing replay instead of starting another agent or browser.
+The coordinator creates a high-entropy token, stores only its digest, and binds it to the run,
+artifact hash and version, replay session, surface session, completed-step checkpoint, expected page
+transition, and TTL. The browser remains open while the employee acts.
 
-The submission omits production identity, remote secret storage, distributed queues, durable
-cross-process handoff, artifact signing/approval service, fleet scheduling, telemetry backends,
-frame-tree normalization, downloads/uploads, and autonomous recovery through discovery. These cuts
-keep the safety boundary inspectable and match the local assignment scope.
+Resume validates that binding and performs a fresh observation in the same `ReplayEngine` and
+`SurfaceAdapter` session. Completed artifact steps are not repeated. If the HUMAN gate remains, the
+typed result is `HANDOFF_NOT_COMPLETED`; the token remains active and the CLI allows another
+acknowledgement within the original TTL. Success requires the fresh observation to reach
+`ready-for-review`. Expiry, EOF, Ctrl+C, binding mismatch, session change, or an unexpected page
+fails closed.
 
-The next production step would be signed artifact approval plus tenant-bound execution identities
-and a durable evidence store, followed by a second adapter/workflow to validate the intended
-extension points. It should preserve the core rule demonstrated here: models may propose during
-bounded discovery, while policy, replay, outcomes, evidence, and irreversible-action control remain
-deterministic.
+The synthetic verification code is entered only by the evaluator in the browser. It is deliberately
+absent from replay inputs, automated actions, events, summaries, and screenshots. A real code would
+arrive through an out-of-band human channel.
+
+## Safety
+
+Every observed control has an owner—`AUTOMATION`, `HUMAN`, or `NONE`—and a risk classification—
+`SAFE`, `SENSITIVE`, or `IRREVERSIBLE`. Missing or untrusted metadata defaults to the most
+restrictive interpretation. Policy permits only allowlisted automation operations on suitable
+controls and blocks external navigation, ambiguous matches, HUMAN/NONE ownership, and irreversible
+risk.
+
+The final **Open Account** button is `NONE`-owned and `IRREVERSIBLE`. It is present so the
+checkpoint can prove both that review was reached and that the action was not executed. Input values
+are resolved from vault references only at execution time. Evidence stores references, hashes, page
+states, fingerprints, policy decisions, and typed outcomes—not credentials, resolved values, raw
+tokens, verification codes, selectors, HTML, or provider messages. Screenshots mask form controls
+and invocation-dependent values. SDK tracing is disabled, runtime evidence is ignored, and curated
+evidence is redaction-tested and hash-manifested.
+
+## Cuts
+
+The optional work is intentionally represented at its actual maturity:
+
+- Confidence/approval lifecycle: **partial**. DRAFT, `approvalRequired`, default rejection, and an
+  explicit demo override exist; there is no signed approval service.
+- Multi-run stability: **partial**. Deterministic tests and multiple successful runs exist, but
+  there is no formal flakiness dashboard.
+- Canonicalization/cross-tenant reuse: **designed, not demonstrated** across real tenants.
+- Agent-facing capability catalog/API: **not implemented**.
+- Bounded single-step LLM fallback: **not implemented**.
+- Code generation: **not implemented**.
+- Cross-process handoff recovery/full co-browsing: **not implemented**.
+
+Production identity, remote secret storage, durable workflow infrastructure, signing, fleet
+scheduling, and telemetry are also outside this local reference. They were cut in favor of a small,
+auditable core that demonstrates the assignment's harder boundary: an LLM can discover a workflow,
+but deterministic code controls approval, replay, recovery, evidence, human ownership, and every
+irreversible-action decision.

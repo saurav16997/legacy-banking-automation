@@ -333,6 +333,35 @@ describe("resumable deterministic replay handoff", () => {
     expect(fixture.surface.observeOptions).toHaveLength(observations);
   });
 
+  it("keeps the CLI handoff active after premature acknowledgement and accepts a later retry", async () => {
+    const fixture = await pause({ handoffTtlMs: 600_000 });
+    const commandCount = fixture.surface.commands.length;
+    const messages: string[] = [];
+    let acknowledgementCount = 0;
+
+    const result = await driveHandoffLifecycle(
+      fixture.engine,
+      fixture.intervention,
+      () => {
+        acknowledgementCount += 1;
+        if (acknowledgementCount === 2) fixture.surface.observation = reviewObservation();
+        return Promise.resolve("ACKNOWLEDGED");
+      },
+      (message) => messages.push(message),
+    );
+
+    expect(result).toMatchObject({
+      status: "success",
+      outputs: { preparation_status: "READY_FOR_REVIEW", account_created: false },
+    });
+    expect(acknowledgementCount).toBe(2);
+    expect(messages.join("\n")).toContain("Verification is still required");
+    expect(fixture.surface.commands).toHaveLength(commandCount);
+    expect(fixture.evidence.events).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: "HANDOFF_NOT_COMPLETED" })]),
+    );
+  });
+
   it.each(["EOF", "SIGNAL", "EXPIRED"] as const)(
     "safely abandons and closes the surface on %s",
     async (acknowledgement) => {

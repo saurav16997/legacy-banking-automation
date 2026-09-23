@@ -138,6 +138,20 @@ describe("synthetic target portal", () => {
       .expect(302);
     expect(target.fixtures.findMember("M-10042")?.accounts).toHaveLength(1);
 
+    const incorrectCode = "000000";
+    const rejected = await agent
+      .post("/members/M-10042/identity-verification")
+      .type("form")
+      .send({ verificationCode: incorrectCode })
+      .expect(422)
+      .expect(/data-page-state="human-verification-required"/)
+      .expect(/The verification code is incorrect/);
+    expect(rejected.text).not.toContain(incorrectCode);
+    await agent
+      .get("/members/M-10042/savings/review")
+      .expect("Location", "/members/M-10042/identity-verification")
+      .expect(302);
+
     await agent
       .post("/members/M-10042/identity-verification")
       .type("form")
