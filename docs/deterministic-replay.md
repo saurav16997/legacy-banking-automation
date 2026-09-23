@@ -57,11 +57,19 @@ resume tokens, verification codes, or visible page text.
 Start the target portal, set `TARGET_BASE_URL` and `PORTAL_PASSWORD`, then run:
 
 ```powershell
-npm run replay:prepare -- --allow-draft
+npm run replay:prepare:demo
 ```
+
+For a visible browser:
+
+```powershell
+npm run replay:prepare:demo:headed
+```
+
+These task-specific local demonstration commands contain the explicit DRAFT override. Production and
+default `ReplayEngine` behavior still rejects DRAFT artifacts.
 
 The default replay member is the second synthetic fixture, `M-20017`, so the successful replay does
 not reuse discovery's member. Optional overrides are `REPLAY_OPERATOR_USERNAME`, `REPLAY_MEMBER_ID`,
 `REPLAY_PRODUCT_NAME`, `REPLAY_ACCOUNT_NICKNAME`, `REPLAY_INITIAL_DEPOSIT`, and
-`REPLAY_FUNDING_ACCOUNT`. Add `--headed` to show Chromium. The CLI prints only a sanitized terminal
-summary and evidence path.
+`REPLAY_FUNDING_ACCOUNT`. The CLI prints only a sanitized terminal summary and evidence path.

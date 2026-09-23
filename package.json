@@ -20,6 +20,8 @@
     "discover:prepare:headed": "tsx src/cli/index.ts --task=prepare_savings_subaccount --headed",
     "compile:prepare": "npm run build --silent && node dist/src/cli/compile-prepare.js",
     "replay:prepare": "npm run build --silent && node dist/src/cli/replay-prepare.js",
+    "replay:prepare:demo": "npm run build --silent && node dist/src/cli/replay-prepare.js --allow-draft",
+    "replay:prepare:demo:headed": "npm run build --silent && node dist/src/cli/replay-prepare.js --allow-draft --headed",
     "replay:prepare:handoff": "npm run build --silent && node dist/src/cli/replay-prepare-handoff.js --allow-draft"
   },
   "dependencies": {

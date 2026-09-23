@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { parseReplayArguments, readReplayInputs } from "../../src/cli/replay-prepare.js";
 
 describe("replay CLI", () => {
-  it("uses a task-specific Windows-safe script and parses direct flags", async () => {
+  it("provides generic and task-specific Windows-safe scripts", async () => {
     const packageJson = JSON.parse(await readFile("package.json", "utf8")) as {
       scripts?: Record<string, string>;
     };
@@ -12,11 +12,21 @@ describe("replay CLI", () => {
     expect(packageJson.scripts?.["replay:prepare"]).toBe(
       "npm run build --silent && node dist/src/cli/replay-prepare.js",
     );
+    expect(packageJson.scripts?.["replay:prepare:demo"]).toBe(
+      "npm run build --silent && node dist/src/cli/replay-prepare.js --allow-draft",
+    );
+    expect(packageJson.scripts?.["replay:prepare:demo:headed"]).toBe(
+      "npm run build --silent && node dist/src/cli/replay-prepare.js --allow-draft --headed",
+    );
+  });
+
+  it("parses supported direct flags and rejects unknown options", () => {
     expect(parseReplayArguments(["--allow-draft", "--headed"])).toEqual({
       allowDraft: true,
       headed: true,
       help: false,
     });
+    expect(() => parseReplayArguments(["--unknown"])).toThrow("Unknown replay option: --unknown");
   });
 
   it("requires only the target URL and password while naming every optional replay override", () => {

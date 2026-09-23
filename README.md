@@ -64,12 +64,19 @@ npm run target:start
 In a second terminal, run the approved local draft artifact:
 
 ```powershell
-npm run replay:prepare -- --allow-draft
+npm run replay:prepare:demo
 ```
 
-Add `--headed` to watch Chromium. A successful run executes 12 ordered artifact actions, reaches
-`ready-for-review`, reports `READY_FOR_REVIEW`, and closes without creating an account or targeting
-**Open Account**.
+For a visible browser:
+
+```powershell
+npm run replay:prepare:demo:headed
+```
+
+These task-specific local demonstration commands contain the explicit DRAFT override. Production and
+default `ReplayEngine` behavior still rejects DRAFT artifacts. A successful run executes 12 ordered
+artifact actions, reaches `ready-for-review`, reports `READY_FOR_REVIEW`, and closes without
+creating an account or targeting **Open Account**.
 
 ## Human-handoff demo
 
